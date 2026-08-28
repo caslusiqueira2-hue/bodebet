@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { LogOut, Menu, Search, Wallet, X } from 'lucide-react'
+import { ArrowDownUp, LogOut, Menu, Search, Wallet, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BrandLogo } from '@/components/brand-logo'
 import { useProfile } from '@/hooks/use-profile'
@@ -59,6 +59,21 @@ export function SiteHeader() {
           >
             <Search className="size-5" />
           </button>
+
+          {/* Botão Depósito/Saque — sempre visível ao lado da lupa quando logado */}
+          {!loading && profile && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-semibold"
+              onClick={() => document.dispatchEvent(new CustomEvent('open-deposit-modal'))}
+            >
+              <ArrowDownUp className="size-4" />
+              <span className="hidden sm:inline">Depósito / Saque</span>
+              <span className="sm:hidden">Dep.</span>
+            </Button>
+          )}
+
             {loading ? (
               // Perfil ainda carregando — mostra spinner discreto
               <div className="h-8 w-24 animate-pulse rounded-lg bg-muted" />
