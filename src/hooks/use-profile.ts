@@ -38,7 +38,10 @@ export function useProfile() {
       const newProfile: Profile = { 
         id: userId, balance: 0, role: isAdmin ? 'admin' : 'user', email: userEmail, is_completed: false 
       };
-      await supabase.from('profiles').insert([newProfile]);
+      const { error: insertError } = await supabase.from('profiles').insert([newProfile]);
+      if (insertError) {
+        console.error('Failed to create profile:', insertError);
+      }
       setProfile(newProfile);
     }
     setLoading(false);
@@ -112,8 +115,12 @@ export function useProfile() {
 
   const updateProfileData = async (updates: Partial<Profile>) => {
     if (!profile) return;
+    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
+    if (error) {
+      console.error('Update profile error:', error);
+      throw new Error(error.message);
+    }
     setProfile(prev => prev ? { ...prev, ...updates } : null);
-    await supabase.from('profiles').update(updates).eq('id', profile.id);
   };
 
   return { profile, loading, persistBalance, updateProfileData };

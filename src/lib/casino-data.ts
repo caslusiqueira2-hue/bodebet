@@ -90,15 +90,6 @@ export const games: Game[] = [
     href: '/games/penalty-lucky',
   },
   {
-    id: 'blackjack',
-    name: 'Blackjack VIP',
-    provider: 'Evolution',
-    image: '/games/blackjack.svg',
-    category: 'ao-vivo',
-    players: 964,
-    rtp: 99.5,
-  },
-  {
     id: 'sweet-candy',
     name: 'Sweet Bonanza',
     provider: 'Pragmatic',
@@ -153,7 +144,6 @@ export const recentWins = [
   { player: 'ana***91', game: 'Mines', amount: 3145.2 },
   { player: 'jo***ao', game: 'Sweet Bonanza', amount: 2890.0 },
   { player: 'ka***ol', game: 'Plinko', amount: 1740.75 },
-  { player: 'ti***go', game: 'Blackjack VIP', amount: 1520.0 },
   { player: 'be***ta', game: 'Sweet Bonanza', amount: 998.4 },
 ]
 

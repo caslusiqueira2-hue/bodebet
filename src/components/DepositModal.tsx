@@ -176,24 +176,24 @@ export function DepositModal({ isOpen, onClose, userId }: Props) {
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="bg-surface w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="flex bg-background border-b border-white/5 relative">
+        <div className="flex border-b border-white/10 mb-6 bg-background rounded-t-xl overflow-hidden">
           <button
             onClick={() => { setActiveTab('deposit'); setError(null); setSuccess(null); setStep(1); }}
             className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
-              activeTab === 'deposit' ? 'text-white border-b-2 border-primary' : 'text-textMuted hover:text-white'
+              activeTab === 'deposit' ? 'bg-primary text-white' : 'bg-surfaceHover text-textMuted hover:bg-white/10 hover:text-white'
             }`}
           >
-            <ArrowDownToLine className="w-4 h-4" /> Depósito
+            <Wallet className="w-4 h-4" /> Depositar
           </button>
           <button
             onClick={() => { setActiveTab('withdraw'); setError(null); setSuccess(null); }}
             className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
-              activeTab === 'withdraw' ? 'text-white border-b-2 border-primary' : 'text-textMuted hover:text-white'
+              activeTab === 'withdraw' ? 'bg-primary text-white' : 'bg-surfaceHover text-textMuted hover:bg-white/10 hover:text-white'
             }`}
           >
-            <ArrowUpFromLine className="w-4 h-4" /> Saque
+            <ArrowUpFromLine className="w-4 h-4" /> Sacar
           </button>
-          <button onClick={resetAndClose} className="absolute right-4 top-1/2 -translate-y-1/2 text-textMuted hover:text-white transition-colors">
+          <button onClick={resetAndClose} className="absolute right-4 top-4 bg-black/40 p-2 rounded-full text-textMuted hover:text-white hover:bg-black/60 transition-colors z-10">
             <X className="w-5 h-5" />
           </button>
         </div>
