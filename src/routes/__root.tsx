@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Auth } from '@/components/Auth';
 import { DepositModal } from '@/components/DepositModal';
+import { ProfileCompletionModal } from '@/components/ProfileCompletionModal';
 import type { Session } from '@supabase/supabase-js';
 
 interface RouterContext {
@@ -23,18 +24,26 @@ function RootComponent() {
   const [isDepositOpen, setIsDepositOpen] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsLoading(false);
+      if (mounted) {
+        setSession(session);
+        setIsLoading(false);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      if (mounted) {
+        setSession(session);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -55,11 +64,14 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       {session && (
-        <DepositModal 
-          isOpen={isDepositOpen} 
-          onClose={() => setIsDepositOpen(false)} 
-          userId={session.user.id} 
-        />
+        <>
+          <DepositModal 
+            isOpen={isDepositOpen} 
+            onClose={() => setIsDepositOpen(false)} 
+            userId={session.user.id} 
+          />
+          <ProfileCompletionModal />
+        </>
       )}
       <Toaster />
     </QueryClientProvider>

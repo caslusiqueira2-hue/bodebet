@@ -1,0 +1,1 @@
+ALTER TABLE public.athletes ADD COLUMN IF NOT EXISTS training_energy integer NOT NULL DEFAULT 5;

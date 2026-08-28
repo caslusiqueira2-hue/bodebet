@@ -6,6 +6,12 @@ export interface Profile {
   balance: number;
   role: string;
   email?: string;
+  full_name?: string;
+  cpf?: string;
+  phone?: string;
+  address?: string;
+  photo_url?: string;
+  is_completed?: boolean;
 }
 
 const ADMIN_EMAIL = 'christianlucas12@gmail.com';
@@ -22,17 +28,16 @@ export function useProfile() {
       .single();
 
     if (data) {
-      // Força admin se for o email correto, independente do banco
       const role = userEmail === ADMIN_EMAIL ? 'admin' : (data.role ?? 'user');
-      // Atualiza silenciosamente no banco se necessário
       if (userEmail === ADMIN_EMAIL && data.role !== 'admin') {
         supabase.from('profiles').update({ role: 'admin' }).eq('id', userId).then(() => {});
       }
       setProfile({ ...data, role });
     } else if (error?.code === 'PGRST116') {
-      // Perfil não existe — cria automaticamente
       const isAdmin = userEmail === ADMIN_EMAIL;
-      const newProfile: Profile = { id: userId, balance: 0, role: isAdmin ? 'admin' : 'user', email: userEmail };
+      const newProfile: Profile = { 
+        id: userId, balance: 0, role: isAdmin ? 'admin' : 'user', email: userEmail, is_completed: false 
+      };
       await supabase.from('profiles').insert([newProfile]);
       setProfile(newProfile);
     }
@@ -40,8 +45,9 @@ export function useProfile() {
   }
 
   useEffect(() => {
-    // Usa getSession() — igual ao __root.tsx — para não ter corrida de dados
+    let mounted = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       if (session?.user) {
         loadProfile(session.user.id, session.user.email);
       } else {
@@ -50,8 +56,8 @@ export function useProfile() {
       }
     });
 
-    // Atualiza quando a sessão mudar (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
       if (session?.user) {
         setLoading(true);
         loadProfile(session.user.id, session.user.email);
@@ -61,7 +67,10 @@ export function useProfile() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const persistBalance = async (newBalance: number) => {
@@ -70,5 +79,11 @@ export function useProfile() {
     await supabase.from('profiles').update({ balance: newBalance }).eq('id', profile.id);
   };
 
-  return { profile, loading, persistBalance };
+  const updateProfileData = async (updates: Partial<Profile>) => {
+    if (!profile) return;
+    setProfile(prev => prev ? { ...prev, ...updates } : null);
+    await supabase.from('profiles').update(updates).eq('id', profile.id);
+  };
+
+  return { profile, loading, persistBalance, updateProfileData };
 }

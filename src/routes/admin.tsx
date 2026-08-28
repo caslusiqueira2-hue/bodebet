@@ -6,7 +6,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Search, ShieldAlert, Plus, Users, Settings } from 'lucide-react';
+import { Search, ShieldAlert, Plus, Users, Settings, Save, AlertCircle } from 'lucide-react';
 import { useProfile } from '@/hooks/use-profile';
 
 export const Route = createFileRoute('/admin')({
@@ -16,6 +16,12 @@ export const Route = createFileRoute('/admin')({
 type UserProfile = {
   id: string;
   email: string | null;
+  full_name: string | null;
+  cpf: string | null;
+  phone: string | null;
+  address: string | null;
+  photo_url: string | null;
+  is_completed: boolean;
   balance: number;
   role: string;
   created_at: string;
@@ -28,12 +34,15 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+  
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [search, setSearch] = useState('');
   const [amountToAdd, setAmountToAdd] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'users' | 'settings'>('users');
 
-  // Verifica a sessão diretamente e escuta mudanças
+  const [minesDifficulty, setMinesDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
   useEffect(() => {
     let mounted = true;
 
@@ -60,7 +69,6 @@ function AdminDashboard() {
     };
   }, []);
 
-  // Redireciona apenas se tiver certeza que terminou de carregar e não é o email correto
   useEffect(() => {
     if (sessionLoading || !sessionEmail) return;
 
@@ -69,6 +77,7 @@ function AdminDashboard() {
       navigate({ to: '/' });
     } else {
       fetchUsers();
+      fetchSettings();
     }
   }, [sessionEmail, sessionLoading, navigate]);
 
@@ -78,9 +87,38 @@ function AdminDashboard() {
       .select('*')
       .order('created_at', { ascending: false });
     
-    if (data) setUsers(data);
+    if (data) setUsers(data as UserProfile[]);
     if (error) toast.error('Erro ao buscar usuários');
   }
+
+  async function fetchSettings() {
+    // Busca a configuração global (ID 1)
+    const { data } = await supabase
+      .from('global_settings')
+      .select('mines_difficulty')
+      .eq('id', 1)
+      .single();
+    
+    if (data && data.mines_difficulty) {
+      setMinesDifficulty(data.mines_difficulty);
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const { error } = await supabase
+        .from('global_settings')
+        .upsert({ id: 1, mines_difficulty: minesDifficulty });
+      
+      if (error) throw error;
+      toast.success('Configurações salvas com sucesso! A banca agora opera com esta dificuldade.');
+    } catch (err) {
+      toast.error('Erro ao salvar as configurações.');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const handleAddBalance = async (userId: string, currentBalance: number) => {
     const amountStr = amountToAdd[userId];
@@ -107,13 +145,15 @@ function AdminDashboard() {
     }
   };
 
-  if (sessionLoading || sessionEmail !== ADMIN_EMAIL) {
+  if (sessionLoading || !sessionEmail || sessionEmail.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-white">Carregando painel administrativo...</div>;
   }
 
   const filteredUsers = users.filter(u => 
     u.id.includes(search) || 
-    (u.email && u.email.toLowerCase().includes(search.toLowerCase()))
+    (u.email && u.email.toLowerCase().includes(search.toLowerCase())) ||
+    (u.full_name && u.full_name.toLowerCase().includes(search.toLowerCase())) ||
+    (u.cpf && u.cpf.includes(search))
   );
 
   return (
@@ -146,95 +186,163 @@ function AdminDashboard() {
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input 
-                placeholder="Pesquisar por email ou ID..." 
+                placeholder="Pesquisar por email, nome, CPF ou ID..." 
                 className="pl-10 bg-card border-border"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <div className="rounded-xl border border-border bg-card overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Usuário (E-mail)</th>
-                    <th className="px-6 py-4 font-medium">ID</th>
-                    <th className="px-6 py-4 font-medium">Saldo Atual</th>
-                    <th className="px-6 py-4 font-medium">Cargo</th>
-                    <th className="px-6 py-4 font-medium text-right">Adicionar Saldo</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-4 text-foreground font-medium">{u.email || 'Sem e-mail (Antigo)'}</td>
-                      <td className="px-6 py-4 text-muted-foreground text-xs">{u.id}</td>
-                      <td className="px-6 py-4 text-primary font-bold">R$ {u.balance.toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${u.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground'}`}>
-                          {u.role.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                        <Input 
-                          type="number" 
-                          placeholder="0.00" 
-                          className="w-24 h-9 bg-background"
-                          min="0"
-                          value={amountToAdd[u.id] || ''}
-                          onChange={(e) => setAmountToAdd(prev => ({ ...prev, [u.id]: e.target.value }))}
-                        />
-                        <Button 
-                          size="sm" 
-                          className="bg-safe text-black hover:bg-yellow-500"
-                          onClick={() => handleAddBalance(u.id, u.balance)}
-                        >
-                          <Plus className="size-4 mr-1" />
-                          Adicionar
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                        Nenhum usuário encontrado.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="grid gap-4">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="bg-card border border-border rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  
+                  <div className="flex items-start gap-4">
+                    {user.photo_url ? (
+                      <img src={user.photo_url} alt="Foto de perfil" className="w-12 h-12 rounded-full object-cover border border-white/10" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-textMuted text-sm font-bold border border-white/5">
+                        {user.full_name ? user.full_name.charAt(0).toUpperCase() : '?'}
+                      </div>
+                    )}
+                    
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-white text-lg">{user.full_name || 'Usuário Não Concluído'}</span>
+                        {user.role === 'admin' && (
+                          <span className="bg-primary/20 text-primary text-xs px-2 py-0.5 rounded uppercase font-bold">Admin</span>
+                        )}
+                        {user.is_completed ? (
+                          <span className="bg-safe/20 text-safe text-xs px-2 py-0.5 rounded uppercase font-bold">Verificado</span>
+                        ) : (
+                          <span className="bg-warning/20 text-warning text-xs px-2 py-0.5 rounded uppercase font-bold">Incompleto</span>
+                        )}
+                      </div>
+                      
+                      <div className="text-sm text-textMuted flex flex-col gap-1 mt-2">
+                        <p><strong className="text-white/70">E-mail:</strong> {user.email || 'N/A'}</p>
+                        <p><strong className="text-white/70">CPF:</strong> {user.cpf || 'N/A'}</p>
+                        <p><strong className="text-white/70">Telefone:</strong> {user.phone || 'N/A'}</p>
+                        <p><strong className="text-white/70">Endereço:</strong> {user.address || 'N/A'}</p>
+                        <p><strong className="text-white/70">ID:</strong> <span className="font-mono text-xs">{user.id}</span></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4 bg-background p-4 rounded-lg border border-white/5 min-w-[250px]">
+                    <div>
+                      <p className="text-xs text-textMuted uppercase font-bold mb-1">Saldo em Conta</p>
+                      <p className="text-2xl font-black text-safe">R$ {Number(user.balance).toFixed(2)}</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Input 
+                        type="number"
+                        placeholder="Valor"
+                        className="bg-card"
+                        value={amountToAdd[user.id] || ''}
+                        onChange={(e) => setAmountToAdd(prev => ({ ...prev, [user.id]: e.target.value }))}
+                      />
+                      <Button 
+                        onClick={() => handleAddBalance(user.id, Number(user.balance))}
+                        className="bg-primary hover:bg-primaryHover text-white gap-2 whitespace-nowrap"
+                      >
+                        <Plus className="size-4" /> Adicionar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {filteredUsers.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border">
+                  Nenhum usuário encontrado.
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'settings' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="text-lg font-bold text-foreground mb-4">Limites Globais (Simulação)</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Aposta Mínima (R$)</label>
-                  <Input type="number" defaultValue="1.00" className="mt-1 bg-background" />
+          <div className="flex flex-col gap-6 max-w-2xl">
+            
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-4">A Banca Sempre Vence</h2>
+              
+              <div className="mb-6">
+                <p className="text-sm text-textMuted mb-6 flex items-start gap-2 bg-warning/10 border border-warning/20 p-3 rounded-lg text-warning">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  Altere a dificuldade dos jogos originais (como o Mines) para manipular a probabilidade real de vitória e garantir o lucro da casa. A interface visual do jogo permanecerá idêntica para o jogador.
+                </p>
+
+                <label className="text-sm font-bold text-white uppercase mb-3 block">
+                  Dificuldade do Mines
+                </label>
+                <div className="flex flex-col gap-3">
+                  
+                  <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${minesDifficulty === 'easy' ? 'bg-primary/20 border-primary' : 'bg-background border-white/10 hover:border-white/30'}`}>
+                    <input 
+                      type="radio" 
+                      name="minesDifficulty" 
+                      value="easy" 
+                      checked={minesDifficulty === 'easy'} 
+                      onChange={() => setMinesDifficulty('easy')}
+                      className="w-4 h-4 accent-primary" 
+                    />
+                    <div>
+                      <p className="font-bold text-white">Modo Fácil (Probabilidade Real)</p>
+                      <p className="text-xs text-textMuted mt-1">O jogo funciona 100% na matemática real. Os resultados dependem puramente da sorte matemática.</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${minesDifficulty === 'medium' ? 'bg-primary/20 border-primary' : 'bg-background border-white/10 hover:border-white/30'}`}>
+                    <input 
+                      type="radio" 
+                      name="minesDifficulty" 
+                      value="medium" 
+                      checked={minesDifficulty === 'medium'} 
+                      onChange={() => setMinesDifficulty('medium')}
+                      className="w-4 h-4 accent-primary" 
+                    />
+                    <div>
+                      <p className="font-bold text-white">Modo Médio (Casa Vence Mais)</p>
+                      <p className="text-xs text-textMuted mt-1">Reduz as chances de vitória do jogador em 15% por clique. Bombas secretas podem aparecer onde seria seguro.</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${minesDifficulty === 'hard' ? 'bg-primary/20 border-primary' : 'bg-background border-white/10 hover:border-white/30'}`}>
+                    <input 
+                      type="radio" 
+                      name="minesDifficulty" 
+                      value="hard" 
+                      checked={minesDifficulty === 'hard'} 
+                      onChange={() => setMinesDifficulty('hard')}
+                      className="w-4 h-4 accent-primary" 
+                    />
+                    <div>
+                      <p className="font-bold text-white">Modo Difícil (Lucro Máximo)</p>
+                      <p className="text-xs text-textMuted mt-1">Reduz drasticamente as chances do jogador em 40% por clique. Extremamente difícil ganhar lucros altos.</p>
+                    </div>
+                  </label>
+
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Aposta Máxima (R$)</label>
-                  <Input type="number" defaultValue="1000.00" className="mt-1 bg-background" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status do Cassino</label>
-                  <select className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm mt-1">
-                    <option>Ativo (Aceitando Apostas)</option>
-                    <option>Manutenção (Bloqueado)</option>
-                  </select>
-                </div>
-                <Button className="w-full mt-2">Salvar Configurações Globais</Button>
               </div>
+
+              <Button 
+                onClick={handleSaveSettings}
+                disabled={isSavingSettings}
+                className="w-full bg-primary hover:bg-primaryHover text-white gap-2 font-bold py-6 text-lg"
+              >
+                {isSavingSettings ? 'Salvando...' : <><Save className="w-5 h-5" /> Salvar Configurações</>}
+              </Button>
+
             </div>
+
           </div>
         )}
 
       </main>
+      
       <SiteFooter />
     </div>
   );

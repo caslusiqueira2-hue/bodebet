@@ -1,0 +1,1 @@
+ALTER TABLE public.athletes ADD COLUMN IF NOT EXISTS gameplan jsonb NOT NULL DEFAULT '["pull_guard","keep_distance","closed_guard","recover","manage","control"]'::jsonb;
