@@ -21,26 +21,39 @@ type UserProfile = {
   created_at: string;
 };
 
+const ADMIN_EMAIL = 'christianlucas12@gmail.com';
+
 function AdminDashboard() {
   const { profile, loading } = useProfile();
   const navigate = useNavigate();
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [search, setSearch] = useState('');
   const [amountToAdd, setAmountToAdd] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'users' | 'settings'>('users');
 
+  // Verifica a sessão diretamente — não depende do useProfile para autorização
   useEffect(() => {
-    if (!loading && profile?.role !== 'admin') {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSessionEmail(session?.user?.email ?? null);
+      setSessionLoading(false);
+    });
+  }, []);
+
+  // Redireciona apenas se tiver certeza que não é admin
+  useEffect(() => {
+    if (!sessionLoading && sessionEmail !== ADMIN_EMAIL) {
       toast.error('Acesso negado. Apenas administradores.');
       navigate({ to: '/' });
     }
-  }, [profile, loading, navigate]);
+  }, [sessionEmail, sessionLoading, navigate]);
 
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (sessionEmail === ADMIN_EMAIL) {
       fetchUsers();
     }
-  }, [profile]);
+  }, [sessionEmail]);
 
   async function fetchUsers() {
     const { data, error } = await supabase
@@ -77,7 +90,7 @@ function AdminDashboard() {
     }
   };
 
-  if (loading || profile?.role !== 'admin') {
+  if (sessionLoading || sessionEmail !== ADMIN_EMAIL) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-white">Carregando painel administrativo...</div>;
   }
 
