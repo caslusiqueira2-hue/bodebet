@@ -1,5 +1,5 @@
-
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useDemoWallet } from '@/hooks/use-demo-wallet'
 import {
   GRID_SIZE,
   randomGrid,
@@ -10,15 +10,12 @@ import {
   type SymbolId,
 } from '@/lib/fortune-tiger-engine'
 
-const INITIAL_BALANCE = 1000
 /** Tempo que cada coluna leva girando antes de parar. */
 const REEL_STOP_DELAY = [420, 620, 820]
 const WIN_DISPLAY_MS = 1600
-/** Cofre do Tigre: custo, chance e prêmio em fichas fictícias. */
 const VAULT_COST = 1
 const VAULT_CHANCE = 0.08
 const VAULT_PRIZE = 12
-
 
 export type HistoryEntry = {
   id: number
@@ -29,8 +26,8 @@ export type HistoryEntry = {
 }
 
 export function useFortuneTiger() {
-  const [balance, setBalance] = useState(INITIAL_BALANCE)
-  const [bet, setBet] = useState(2)
+  const { balance, balanceRef, bet, betRef, changeBet, debit, credit } = useDemoWallet({ defaultBet: 2 })
+
   const [grid, setGrid] = useState<SymbolId[]>(() => Array(GRID_SIZE).fill('coin'))
   const [spinningReels, setSpinningReels] = useState<boolean[]>([false, false, false])
   const [wins, setWins] = useState<LineWin[]>([])
@@ -45,15 +42,9 @@ export function useFortuneTiger() {
   const [vaultOpen, setVaultOpen] = useState(false)
   const [vaultTries, setVaultTries] = useState(0)
 
-
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const busyRef = useRef(false)
   const autoRef = useRef(0)
-  const betRef = useRef(bet)
-  const balanceRef = useRef(balance)
-
-  betRef.current = bet
-  balanceRef.current = balance
 
   const isSpinning = spinningReels.some(Boolean)
 
@@ -64,7 +55,6 @@ export function useFortuneTiger() {
   }, [])
 
   useEffect(() => {
-    // A grade inicial usa Math.random, então só pode ser sorteada no cliente.
     setGrid(randomGrid())
     return () => {
       timers.current.forEach(clearTimeout)
@@ -72,7 +62,6 @@ export function useFortuneTiger() {
     }
   }, [])
 
-  /** Roda um giro: desconta a aposta (exceto no giro grátis) e revela as colunas. */
   const runSpin = useCallback(
     (options: { free?: boolean } = {}) => {
       const free = options.free ?? false
@@ -80,13 +69,12 @@ export function useFortuneTiger() {
       const speed = turbo ? 0.45 : 1
 
       if (!free) {
-        if (currentBet > balanceRef.current) {
+        if (!debit(currentBet)) {
           setMessage('Saldo insuficiente para essa aposta')
           autoRef.current = 0
           setAutoSpins(0)
           return
         }
-        setBalance((value) => value - currentBet)
       }
 
       busyRef.current = true
@@ -123,7 +111,7 @@ export function useFortuneTiger() {
         setLastMultiplier(result.multiplier)
 
         if (result.total > 0) {
-          setBalance((value) => value + result.total)
+          credit(result.total)
           const tier = winTier(result.multiplier)
           setMessage(
             tier === 'mega'
@@ -152,7 +140,6 @@ export function useFortuneTiger() {
           ].slice(0, 12),
         )
 
-        // Encadeia o giro grátis ou o próximo giro automático.
         schedule(
           () => {
             busyRef.current = false
@@ -178,7 +165,7 @@ export function useFortuneTiger() {
         )
       }, settleAt)
     },
-    [schedule, turbo],
+    [schedule, turbo, debit, credit, betRef, balanceRef],
   )
 
   const handleSpin = useCallback(() => {
@@ -200,38 +187,25 @@ export function useFortuneTiger() {
     setAutoSpins(0)
   }, [])
 
-  const changeBet = useCallback((value: number) => {
-    if (busyRef.current) return
-    setBet(value)
-  }, [])
-
   const resetBalance = useCallback(() => {
-    if (busyRef.current) return
-    setBalance(INITIAL_BALANCE)
-    setHistory([])
-    setMessage('Saldo do modo demonstração restaurado')
+    // Ação desativada pois a carteira é universal agora
   }, [])
 
-  /**
-   * Cofre do Tigre: cada tentativa custa R$ 1,00 do saldo fictício e tem 8%
-   * de chance de abrir, pagando R$ 12,00 (RTP ~96%). Nenhum valor real.
-   */
   const tryVault = useCallback(() => {
     if (busyRef.current) return
-    if (VAULT_COST > balanceRef.current) {
+    if (!debit(VAULT_COST)) {
       setVaultMessage('Saldo insuficiente para tentar abrir o cofre.')
       return
     }
 
-    setBalance((value) => value - VAULT_COST)
     setVaultTries((value) => value + 1)
 
     const opened = Math.random() < VAULT_CHANCE
     setVaultOpen(opened)
 
     if (opened) {
-      setBalance((value) => value + VAULT_PRIZE)
-      setVaultMessage(`Cofre aberto! Você levou R$ ${VAULT_PRIZE},00 em fichas demo.`)
+      credit(VAULT_PRIZE)
+      setVaultMessage(`Cofre aberto! Você levou R$ ${VAULT_PRIZE},00 em prêmio.`)
     } else {
       setVaultMessage('O cofre continuou trancado. Tente novamente.')
     }
@@ -248,7 +222,7 @@ export function useFortuneTiger() {
         ...previous,
       ].slice(0, 12),
     )
-  }, [])
+  }, [debit, credit])
 
   const winningCells = new Set(wins.flatMap((win) => win.cells))
 
@@ -281,4 +255,3 @@ export function useFortuneTiger() {
     resetBalance,
   }
 }
-

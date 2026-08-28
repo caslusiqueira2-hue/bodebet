@@ -42,14 +42,12 @@ export function useDemoWallet({ defaultBet = 2, historySize = 12 }: Options = {}
   balanceRef.current = balance
   betRef.current = bet
 
-  /** Ao entrar na conta, o saldo salvo no banco substitui o saldo local. */
-  const loadedFor = useRef<string | null>(null)
   useEffect(() => {
-    if (!profile || loadedFor.current === profile.id) return
-    loadedFor.current = profile.id
-    balanceRef.current = profile.balance
-    setBalance(profile.balance)
-  }, [profile])
+    if (profile) {
+      balanceRef.current = profile.balance;
+      setBalance(profile.balance);
+    }
+  }, [profile?.balance]);
 
   /** Desconta a aposta. Devolve false quando o saldo não cobre o valor. */
   const debit = useCallback((amount: number) => {

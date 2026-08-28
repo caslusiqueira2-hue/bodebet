@@ -46,10 +46,25 @@ export function useProfile() {
 
   useEffect(() => {
     let mounted = true;
+    let channel: any = null;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       if (session?.user) {
         loadProfile(session.user.id, session.user.email);
+        
+        channel = supabase
+          .channel('public:profiles:useProfile')
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${session.user.id}` },
+            (payload) => {
+              if (mounted) {
+                setProfile(prev => prev ? { ...prev, balance: Number(payload.new.balance) } : null);
+              }
+            }
+          )
+          .subscribe();
       } else {
         setProfile(null);
         setLoading(false);
@@ -61,15 +76,31 @@ export function useProfile() {
       if (session?.user) {
         setLoading(true);
         loadProfile(session.user.id, session.user.email);
+        
+        if (channel) { supabase.removeChannel(channel); }
+        channel = supabase
+          .channel('public:profiles:useProfileAuth')
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${session.user.id}` },
+            (payload) => {
+              if (mounted) {
+                setProfile(prev => prev ? { ...prev, balance: Number(payload.new.balance) } : null);
+              }
+            }
+          )
+          .subscribe();
       } else {
         setProfile(null);
         setLoading(false);
+        if (channel) { supabase.removeChannel(channel); }
       }
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (channel) { supabase.removeChannel(channel); }
     };
   }, []);
 

@@ -275,9 +275,13 @@ export function DepositModal({ isOpen, onClose, userId }: Props) {
                       <Loader2 className="w-4 h-4 animate-spin text-primary" /> Aguardando pagamento...
                     </p>
                   </div>
-                  {pixData.pix.image ? (
+                  {pixData.pix.image || pixData.pix.code ? (
                     <div className="bg-white p-2 rounded-xl">
-                      <img src={pixData.pix.image} alt="QR Code PIX" className="w-48 h-48" />
+                      <img 
+                        src={pixData.pix.image || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixData.pix.code)}`} 
+                        alt="QR Code PIX" 
+                        className="w-48 h-48" 
+                      />
                     </div>
                   ) : (
                     <div className="w-48 h-48 bg-background border border-white/10 rounded-xl flex items-center justify-center text-textMuted text-xs p-4">

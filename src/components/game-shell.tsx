@@ -33,13 +33,8 @@ export function GameShell({ title, meta, howToPlay, children }: GameShellProps) 
               Voltar ao cassino
             </Link>
             <h1 className="font-display text-2xl font-bold">{title}</h1>
-            <p className="text-sm text-muted-foreground">{meta} · modo demonstração</p>
+            <p className="text-sm text-muted-foreground">{meta}</p>
           </div>
-
-          <p className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-xs text-muted-foreground">
-            <Info className="size-4 shrink-0 text-accent" />
-            Saldo fictício de R$ 1.000. Nenhum valor real é movimentado.
-          </p>
         </div>
 
         {children}
