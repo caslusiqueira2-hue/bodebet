@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Gamepad2, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function Auth() {
@@ -59,10 +59,7 @@ export function Auth() {
       >
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 border border-primary/40">
-            <Gamepad2 className="size-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-black text-white tracking-widest uppercase">BodeBet</h1>
+          <img src="/logo.jpg" alt="BodeBet" className="h-20 w-auto object-contain" />
           <p className="text-muted-foreground text-sm">
             {mode === 'login' ? 'Entre na sua conta para jogar' : 'Crie sua conta agora'}
           </p>
