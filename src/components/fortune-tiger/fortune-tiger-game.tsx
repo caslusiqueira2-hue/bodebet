@@ -1,4 +1,4 @@
-import { Sparkles, Wallet } from 'lucide-react';
+﻿import { Sparkles, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/casino-data';
 import { winTier } from '@/lib/fortune-tiger-engine';

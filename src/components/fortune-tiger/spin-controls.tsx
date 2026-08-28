@@ -1,4 +1,4 @@
-import { Minus, Plus, Play, RotateCcw, Zap } from 'lucide-react';
+﻿import { Minus, Plus, Play, RotateCcw, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/casino-data';
 import { betOptions } from '@/lib/fortune-tiger-engine';
@@ -54,7 +54,7 @@ export function SpinControls({
 
         {/* Win Panel Placeholder */}
         <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-yellow-500/10 to-transparent border border-yellow-500/20 shadow-inner">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-500/80 mb-1">Pr�mio</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-500/80 mb-1">Prêmio</span>
           <span className="font-black text-sm md:text-base text-yellow-400 tabular-nums">--</span>
         </div>
 

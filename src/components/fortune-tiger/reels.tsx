@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+﻿import { cn } from '@/lib/utils';
 import { REEL_COUNT, ROW_COUNT, symbols, type SymbolId } from '@/lib/fortune-tiger-engine';
 import { SymbolIcon } from './tiger-assets';
 
@@ -64,7 +64,7 @@ export function Reels({ grid, spinningReels, winningCells }: ReelsProps) {
                   <div className="absolute inset-0 overflow-hidden">
                     <div className="reel-strip flex flex-col gap-2">
                       {stripSymbols.map((id, index) => (
-                        <SymbolTile key={-} id={id} spinning={true} />
+                        <SymbolTile key={`${id}-${index}`} id={id} spinning={true} />
                       ))}
                     </div>
                   </div>

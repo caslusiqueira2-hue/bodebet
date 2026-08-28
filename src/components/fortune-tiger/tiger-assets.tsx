@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
-import { SymbolId } from '@/lib/fortune-tiger-engine';
+﻿import { cn } from '@/lib/utils';
+import { type SymbolId } from '@/lib/fortune-tiger-engine';
 
 export function TigerLogo({ className }: { className?: string }) {
   return (
