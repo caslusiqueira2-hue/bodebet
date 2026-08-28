@@ -1,129 +1,115 @@
-
-import { Sparkles, Wallet } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { formatBRL } from '@/lib/casino-data'
-import { winTier } from '@/lib/fortune-tiger-engine'
-import { Paytable } from './paytable'
-import { Reels } from './reels'
-import { SpinControls } from './spin-controls'
-import { SpinHistory } from './spin-history'
-import { TigerVault } from './tiger-vault'
-
-import { useFortuneTiger } from './use-fortune-tiger'
+import { Sparkles, Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { formatBRL } from '@/lib/casino-data';
+import { winTier } from '@/lib/fortune-tiger-engine';
+import { Reels } from './reels';
+import { SpinControls } from './spin-controls';
+import { SpinHistory } from './spin-history';
+import { TigerVault } from './tiger-vault';
+import { Paytable } from './paytable';
+import { TigerLogo, TigerCharacter } from './tiger-assets';
+import { useFortuneTiger } from './use-fortune-tiger';
 
 export function FortuneTigerGame() {
-  const game = useFortuneTiger()
-  const tier = game.lastPayout && game.lastPayout > 0 ? winTier(game.lastMultiplier) : null
+  const game = useFortuneTiger();
+  const tier = game.lastPayout && game.lastPayout > 0 ? winTier(game.lastMultiplier) : null;
 
   return (
-    /* No mobile a ordem é rolos → controles → histórico → prêmios.
-       No desktop os itens voltam para as duas colunas via row/col-start. */
-    <div className="grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
-      <div className="lg:col-start-1 lg:row-start-1">
-        <div className="relative overflow-hidden rounded-2xl border border-accent/30 bg-[#25121a]">
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-[url('/fortune-tiger/cabinet-bg.png')] bg-cover bg-center opacity-35"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-b from-[#3a1520]/70 via-[#1a0d13]/80 to-[#0d0710]"
-          />
+    <div className="min-h-screen -m-4 sm:-m-8 p-4 sm:p-8 bg-gradient-to-b from-[#1a050a] via-[#0d0204] to-black relative overflow-hidden flex flex-col items-center">
+      
+      {/* --- BACKGROUND EFFECTS --- */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(150,0,30,0.2)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[radial-gradient(ellipse_at_top,rgba(255,180,0,0.15)_0%,transparent_70%)] pointer-events-none" />
+      
+      {/* Particle overlay placeholder (could be animated via CSS) */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none" />
 
-          <div className="relative flex flex-col gap-4 p-4 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 rounded-lg border border-accent/30 bg-background/60 px-3 py-2">
-                <Wallet className="size-4 shrink-0 text-accent" />
-                <div className="flex flex-col leading-tight">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    Saldo demo
-                  </span>
-                  <span className="font-display text-base font-bold tabular-nums">
-                    {formatBRL(game.balance)}
-                  </span>
-                </div>
-              </div>
+      {/* --- HEADER LOGO --- */}
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center mt-2 mb-8">
+        <TigerLogo />
+      </div>
 
-              {game.respinPending ? (
-                <span className="payout-pop flex items-center gap-1.5 rounded-lg border border-accent bg-accent/15 px-3 py-2 text-xs font-bold text-accent">
-                  <Sparkles className="size-4" />
-                  Giro grátis liberado
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mx-auto w-full max-w-[22rem]">
-              <Reels
-                grid={game.grid}
-                spinningReels={game.spinningReels}
-                winningCells={game.winningCells}
-              />
-            </div>
-
-            {/* Área de mensagem com altura fixa para o layout não pular. */}
-            <div className="flex min-h-16 flex-col items-center justify-center gap-1 text-center">
-              {game.lastPayout && game.lastPayout > 0 ? (
-                <>
-                  <span
-                    className={cn(
-                      'payout-pop font-display font-bold tabular-nums text-accent',
-                      tier === 'mega' ? 'text-3xl' : tier === 'grande' ? 'text-2xl' : 'text-xl',
-                    )}
-                  >
-                    + {formatBRL(game.lastPayout)}
-                  </span>
-                  <span className="text-xs font-medium text-accent/80">
-                    {game.lastMultiplier.toFixed(0)}x a aposta ·{' '}
-                    {game.wins.length === 1 ? '1 linha' : `${game.wins.length} linhas`}
-                  </span>
-                </>
-              ) : (
-                <span
-                  aria-live="polite"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  {game.message}
-                </span>
-              )}
-            </div>
-          </div>
+      {/* --- MAIN GAME AREA --- */}
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+        
+        {/* The Tiger Character sitting on top of the reels */}
+        <div className="relative -mb-16 z-20">
+          <TigerCharacter className={cn("transition-transform duration-500", game.isSpinning ? "scale-95" : "scale-100 hover:scale-105")} />
         </div>
 
-      </div>
+        {/* The Reels Container */}
+        <div className="w-full px-2">
+          <Reels
+            grid={game.grid}
+            spinningReels={game.spinningReels}
+            winningCells={game.winningCells}
+          />
+        </div>
 
-      <div className="lg:col-start-2 lg:row-start-1">
-        <SpinControls
-          bet={game.bet}
-          balance={game.balance}
-          isSpinning={game.isSpinning}
-          autoSpins={game.autoSpins}
-          turbo={game.turbo}
-          onChangeBet={game.changeBet}
-          onSpin={game.handleSpin}
-          onStartAuto={game.startAuto}
-          onStopAuto={game.stopAuto}
-          onToggleTurbo={game.setTurbo}
-          onReset={game.resetBalance}
-        />
-      </div>
+        {/* Win Message Area */}
+        <div className="h-24 w-full flex items-center justify-center my-2 relative">
+          {game.lastPayout && game.lastPayout > 0 ? (
+            <div className="flex flex-col items-center animate-in zoom-in duration-300">
+              <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#d4af37] mb-1">
+                Vencedor!
+              </span>
+              <span
+                className={cn(
+                  'font-black tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-[#ffe259] to-[#ffa751] drop-shadow-[0_2px_10px_rgba(255,215,0,0.5)]',
+                  tier === 'mega' ? 'text-5xl' : tier === 'grande' ? 'text-4xl' : 'text-3xl',
+                )}
+                style={{ WebkitTextStroke: '1px #8a4400' }}
+              >
+                + {formatBRL(game.lastPayout)}
+              </span>
+              {/* Optional: Add particles/coins here */}
+            </div>
+          ) : (
+            <span
+              aria-live="polite"
+              className="text-sm font-bold uppercase tracking-widest text-white/40"
+            >
+              {game.message || 'Boa Sorte!'}
+            </span>
+          )}
+        </div>
 
-      <div className="lg:col-start-1 lg:row-start-2">
-        <SpinHistory history={game.history} />
-      </div>
+        {/* Controls */}
+        <div className="w-full px-2 pb-8">
+          <SpinControls
+            bet={game.bet}
+            balance={game.balance}
+            isSpinning={game.isSpinning}
+            autoSpins={game.autoSpins}
+            turbo={game.turbo}
+            onChangeBet={game.changeBet}
+            onSpin={game.handleSpin}
+            onStartAuto={game.startAuto}
+            onStopAuto={game.stopAuto}
+            onToggleTurbo={game.setTurbo}
+            onReset={game.resetBalance}
+          />
+        </div>
 
-      <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-2">
-        <TigerVault
-          cost={game.vaultCost}
-          prize={game.vaultPrize}
-          tries={game.vaultTries}
-          opened={game.vaultOpen}
-          message={game.vaultMessage}
-          disabled={game.isSpinning}
-          onTry={game.tryVault}
-        />
-        <Paytable />
+        {/* Auxiliary Components */}
+        <div className="w-full px-2 flex flex-col gap-4 pb-8 z-10 relative">
+          <SpinHistory history={game.history} />
+          
+          <TigerVault
+            cost={game.vaultCost}
+            prize={game.vaultPrize}
+            tries={game.vaultTries}
+            opened={game.vaultOpen}
+            message={game.vaultMessage}
+            disabled={game.isSpinning}
+            onTry={game.tryVault}
+          />
+          
+          <Paytable />
+        </div>
+        
       </div>
     </div>
-  )
+  );
 }
 
