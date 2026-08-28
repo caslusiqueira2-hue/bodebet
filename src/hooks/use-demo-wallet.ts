@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useProfile } from '@/hooks/use-profile'
 
-export const INITIAL_BALANCE = 1000
+export const INITIAL_BALANCE = 0
 
 /** Valores de aposta oferecidos em todos os jogos da plataforma. */
 export const betOptions = [1, 2, 5, 10, 25, 50] as const

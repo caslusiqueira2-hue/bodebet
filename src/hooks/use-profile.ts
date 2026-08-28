@@ -30,14 +30,23 @@ export function useProfile() {
         .eq('id', user.id)
         .single();
 
+      const ADMIN_EMAIL = 'christianlucas12@gmail.com';
+
       if (data) {
-        setProfile(data);
+        // Se for o email admin mas o role ainda não foi setado no banco, força admin
+        const resolvedRole = (user.email === ADMIN_EMAIL && data.role !== 'admin') ? 'admin' : data.role;
+        if (resolvedRole === 'admin' && data.role !== 'admin') {
+          // Sincroniza no banco silenciosamente
+          supabase.from('profiles').update({ role: 'admin' }).eq('id', user.id).then(() => {});
+        }
+        setProfile({ ...data, role: resolvedRole });
       } else if (error && error.code === 'PGRST116') {
         // Perfil não existe — cria automaticamente
+        const isAdmin = user.email === ADMIN_EMAIL;
         const newProfile: Profile = {
           id: user.id,
           balance: 0,
-          role: 'user',
+          role: isAdmin ? 'admin' : 'user',
           email: user.email,
         };
         await supabase.from('profiles').insert([newProfile]);
