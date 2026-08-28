@@ -20,6 +20,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -36,6 +37,12 @@ function RootComponent() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const handleOpen = () => setIsDepositOpen(true);
+    document.addEventListener('open-deposit-modal', handleOpen);
+    return () => document.removeEventListener('open-deposit-modal', handleOpen);
+  }, []);
+
   if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-white">Carregando...</div>;
   }
@@ -43,14 +50,6 @@ function RootComponent() {
   if (!session) {
     return <Auth />;
   }
-
-  const [isDepositOpen, setIsDepositOpen] = useState(false);
-
-  useEffect(() => {
-    const handleOpen = () => setIsDepositOpen(true);
-    document.addEventListener('open-deposit-modal', handleOpen);
-    return () => document.removeEventListener('open-deposit-modal', handleOpen);
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
