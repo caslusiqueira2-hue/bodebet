@@ -62,10 +62,12 @@ function AdminDashboard() {
 
   // Redireciona apenas se tiver certeza que terminou de carregar e não é o email correto
   useEffect(() => {
-    if (!sessionLoading && sessionEmail !== ADMIN_EMAIL) {
-      toast.error('Acesso negado. Apenas o e-mail ' + ADMIN_EMAIL + ' pode acessar o painel.');
+    if (sessionLoading || !sessionEmail) return;
+
+    if (sessionEmail.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      toast.error(`Acesso negado. Seu e-mail (${sessionEmail}) não é administrador.`);
       navigate({ to: '/' });
-    } else if (sessionEmail === ADMIN_EMAIL) {
+    } else {
       fetchUsers();
     }
   }, [sessionEmail, sessionLoading, navigate]);

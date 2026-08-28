@@ -61,18 +61,16 @@ export function SiteHeader() {
           </button>
 
           {/* Botão Depósito/Saque — sempre visível ao lado da lupa quando logado */}
-          {!loading && profile && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-semibold"
-              onClick={() => document.dispatchEvent(new CustomEvent('open-deposit-modal'))}
-            >
-              <ArrowDownUp className="size-4" />
-              <span className="hidden sm:inline">Depósito / Saque</span>
-              <span className="sm:hidden">Dep.</span>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-semibold"
+            onClick={() => document.dispatchEvent(new CustomEvent('open-deposit-modal'))}
+          >
+            <ArrowDownUp className="size-4" />
+            <span className="hidden sm:inline">Depósito / Saque</span>
+            <span className="sm:hidden">Dep.</span>
+          </Button>
 
             {loading ? (
               // Perfil ainda carregando — mostra spinner discreto
