@@ -33,27 +33,42 @@ function AdminDashboard() {
   const [amountToAdd, setAmountToAdd] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'users' | 'settings'>('users');
 
-  // Verifica a sessão diretamente — não depende do useProfile para autorização
+  // Verifica a sessão diretamente e escuta mudanças
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSessionEmail(session?.user?.email ?? null);
-      setSessionLoading(false);
+    let mounted = true;
+
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted) {
+        setSessionEmail(session?.user?.email ?? null);
+        setSessionLoading(false);
+      }
+    }
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setSessionEmail(session?.user?.email ?? null);
+        setSessionLoading(false);
+      }
     });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Redireciona apenas se tiver certeza que não é admin
+  // Redireciona apenas se tiver certeza que terminou de carregar e não é o email correto
   useEffect(() => {
     if (!sessionLoading && sessionEmail !== ADMIN_EMAIL) {
-      toast.error('Acesso negado. Apenas administradores.');
+      toast.error('Acesso negado. Apenas o e-mail ' + ADMIN_EMAIL + ' pode acessar o painel.');
       navigate({ to: '/' });
-    }
-  }, [sessionEmail, sessionLoading, navigate]);
-
-  useEffect(() => {
-    if (sessionEmail === ADMIN_EMAIL) {
+    } else if (sessionEmail === ADMIN_EMAIL) {
       fetchUsers();
     }
-  }, [sessionEmail]);
+  }, [sessionEmail, sessionLoading, navigate]);
 
   async function fetchUsers() {
     const { data, error } = await supabase
