@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as GamesAviatorRouteImport } from './routes/games.aviator'
+import { Route as GamesDoubleRouteImport } from './routes/games.double'
 import { Route as GamesFortuneTigerRouteImport } from './routes/games.fortune-tiger'
 import { Route as GamesGatesOfOlympusRouteImport } from './routes/games.gates-of-olympus'
 import { Route as GamesMinesRouteImport } from './routes/games.mines'
@@ -32,6 +33,11 @@ const AdminRoute = AdminRouteImport.update({
 const GamesAviatorRoute = GamesAviatorRouteImport.update({
   id: '/games/aviator',
   path: '/games/aviator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesDoubleRoute = GamesDoubleRouteImport.update({
+  id: '/games/double',
+  path: '/games/double',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesFortuneTigerRoute = GamesFortuneTigerRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/games/aviator': typeof GamesAviatorRoute
+  '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
   '/games/gates-of-olympus': typeof GamesGatesOfOlympusRoute
   '/games/mines': typeof GamesMinesRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/games/aviator': typeof GamesAviatorRoute
+  '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
   '/games/gates-of-olympus': typeof GamesGatesOfOlympusRoute
   '/games/mines': typeof GamesMinesRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/games/aviator': typeof GamesAviatorRoute
+  '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
   '/games/gates-of-olympus': typeof GamesGatesOfOlympusRoute
   '/games/mines': typeof GamesMinesRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/games/aviator'
+    | '/games/double'
     | '/games/fortune-tiger'
     | '/games/gates-of-olympus'
     | '/games/mines'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/games/aviator'
+    | '/games/double'
     | '/games/fortune-tiger'
     | '/games/gates-of-olympus'
     | '/games/mines'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/games/aviator'
+    | '/games/double'
     | '/games/fortune-tiger'
     | '/games/gates-of-olympus'
     | '/games/mines'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   GamesAviatorRoute: typeof GamesAviatorRoute
+  GamesDoubleRoute: typeof GamesDoubleRoute
   GamesFortuneTigerRoute: typeof GamesFortuneTigerRoute
   GamesGatesOfOlympusRoute: typeof GamesGatesOfOlympusRoute
   GamesMinesRoute: typeof GamesMinesRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/games/aviator'
       fullPath: '/games/aviator'
       preLoaderRoute: typeof GamesAviatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/double': {
+      id: '/games/double'
+      path: '/games/double'
+      fullPath: '/games/double'
+      preLoaderRoute: typeof GamesDoubleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/fortune-tiger': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   GamesAviatorRoute: GamesAviatorRoute,
+  GamesDoubleRoute: GamesDoubleRoute,
   GamesFortuneTigerRoute: GamesFortuneTigerRoute,
   GamesGatesOfOlympusRoute: GamesGatesOfOlympusRoute,
   GamesMinesRoute: GamesMinesRoute,
