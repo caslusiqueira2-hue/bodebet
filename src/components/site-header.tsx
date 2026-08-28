@@ -59,15 +59,18 @@ export function SiteHeader() {
           >
             <Search className="size-5" />
           </button>
-            {loading ? null : profile ? (
+            {loading ? (
+              // Perfil ainda carregando — mostra spinner discreto
+              <div className="h-8 w-24 animate-pulse rounded-lg bg-muted" />
+            ) : profile ? (
               <>
                 <div className="hidden sm:flex items-center gap-2">
                   <span className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm font-semibold">
                     <Wallet className="size-4" />
                     R$ {profile.balance.toFixed(2)}
                   </span>
-                  <Button 
-                    variant="default" 
+                  <Button
+                    variant="default"
                     className="h-10 gap-2 px-4 text-sm font-semibold bg-safe text-black hover:bg-yellow-500"
                     onClick={() => {
                       document.dispatchEvent(new CustomEvent('open-deposit-modal'));
@@ -79,6 +82,17 @@ export function SiteHeader() {
                 <span className="hidden text-sm font-medium text-muted-foreground md:inline">
                   Jogador
                 </span>
+                <Button
+                  variant="ghost"
+                  className="h-10 gap-2 px-3 text-sm font-semibold"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="size-4" />
+                  Sair
+                </Button>
+              </>
+            ) : (
+              // Logado mas perfil nulo inesperado — botão de sair de segurança
               <Button
                 variant="ghost"
                 className="h-10 gap-2 px-3 text-sm font-semibold"
@@ -87,25 +101,7 @@ export function SiteHeader() {
                 <LogOut className="size-4" />
                 Sair
               </Button>
-            </>
-          ) : (
-            <>
-                <Button
-                  variant="ghost"
-                  className="h-10 gap-2 px-3 text-sm font-semibold"
-                  onClick={() => navigate({ to: '/' })}
-                >
-                  Entrar
-                </Button>
-                <Button
-                  className="h-10 gap-2 px-4 text-sm font-semibold"
-                  onClick={() => navigate({ to: '/' })}
-                >
-                <Wallet className="size-4" />
-                Cadastrar
-              </Button>
-            </>
-          )}
+            )}
         </div>
       </div>
 
