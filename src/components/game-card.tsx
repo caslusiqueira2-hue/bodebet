@@ -1,8 +1,8 @@
-import Image from '@/components/ui/image'
 import Link from '@/components/ui/nav-link'
 import { Play, Users } from 'lucide-react'
 import type { Game } from '@/lib/casino-data'
 import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
 const badgeStyles: Record<NonNullable<Game['badge']>, string> = {
   novo: 'bg-primary text-primary-foreground',
@@ -10,17 +10,52 @@ const badgeStyles: Record<NonNullable<Game['badge']>, string> = {
   exclusivo: 'bg-secondary text-secondary-foreground',
 }
 
+// Fallback gradient backgrounds por jogo para quando a imagem da CDN falha
+const fallbackGradients: Record<string, string> = {
+  'fortune-tiger': 'from-orange-600 via-red-700 to-yellow-800',
+  'aviator': 'from-red-700 via-rose-800 to-slate-900',
+  'gates-olympus': 'from-purple-700 via-violet-800 to-indigo-900',
+  'mines': 'from-emerald-700 via-green-800 to-teal-900',
+  'plinko': 'from-blue-600 via-cyan-700 to-indigo-800',
+  'penalty-lucky': 'from-green-600 via-lime-700 to-emerald-800',
+  'blackjack': 'from-slate-700 via-zinc-800 to-gray-900',
+  'sweet-candy': 'from-pink-600 via-fuchsia-700 to-purple-800',
+}
+
+const gameEmoji: Record<string, string> = {
+  'fortune-tiger': '🐯',
+  'aviator': '✈️',
+  'gates-olympus': '⚡',
+  'mines': '💣',
+  'plinko': '🔵',
+  'penalty-lucky': '⚽',
+  'blackjack': '🃏',
+  'sweet-candy': '🍬',
+}
+
 export function GameCard({ game }: { game: Game }) {
+  const [imgError, setImgError] = useState(false)
+  const gradient = fallbackGradients[game.id] || 'from-zinc-700 via-zinc-800 to-zinc-900'
+  const emoji = gameEmoji[game.id] || '🎮'
+
   return (
     <article className="group relative overflow-hidden rounded-xl border border-border/60 bg-card transition-colors hover:border-primary/60">
       <div className="relative aspect-[3/4] overflow-hidden">
-        <Image
-          src={game.image || '/placeholder.svg'}
-          alt={`Capa do jogo ${game.name}`}
-          fill
-          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {!imgError ? (
+          <img
+            src={game.image}
+            alt={`Capa do jogo ${game.name}`}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImgError(true)}
+            loading="lazy"
+          />
+        ) : (
+          // Fallback: gradient + emoji quando a imagem não carrega
+          <div className={`absolute inset-0 bg-gradient-to-b ${gradient} flex flex-col items-center justify-center gap-3`}>
+            <span className="text-5xl">{emoji}</span>
+            <span className="text-white/70 text-sm font-semibold text-center px-2">{game.name}</span>
+          </div>
+        )}
 
         {game.badge ? (
           <span

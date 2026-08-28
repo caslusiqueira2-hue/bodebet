@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from 'react'
-import Image from '@/components/ui/image'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { banners } from '@/lib/casino-data'
@@ -21,14 +20,11 @@ export function PromoCarousel() {
   return (
     <section id="promocoes" aria-label="Promoções em destaque" className="flex flex-col gap-3">
       <div className="relative isolate overflow-hidden rounded-2xl border border-border/60 bg-card">
-        <Image
+        <img
           key={banner.id}
-          src={banner.image || '/placeholder.svg'}
+          src={banner.image}
           alt=""
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 1200px"
-          className="object-cover object-right opacity-70"
+          className="absolute inset-0 w-full h-full object-cover object-right opacity-70"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-transparent" />
 
