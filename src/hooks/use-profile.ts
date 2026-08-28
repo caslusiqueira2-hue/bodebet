@@ -19,8 +19,15 @@ export function useProfile() {
     }
     
     async function fetchProfile() {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (data) setProfile(data);
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (data) {
+        setProfile(data);
+      } else if (error && error.code === 'PGRST116') {
+        // No row found, create it
+        const newProfile = { id: user.id, balance: 0, role: 'user', email: user.email };
+        await supabase.from('profiles').insert([newProfile]);
+        setProfile(newProfile);
+      }
     }
     fetchProfile();
   }, [user]);
