@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowDownToLine, ArrowUpFromLine, Copy, CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react';
+import { X, ArrowDownToLine, Wallet, ArrowUpFromLine, Copy, CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../hooks/use-profile';
 import { generatePix } from '../api/sigilopay';
