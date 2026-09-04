@@ -29,11 +29,11 @@ export const games: Game[] = [
     name: 'Fortune Tiger',
     provider: 'PG Soft',
     image: '/games/fortune-tiger.jpg',
-    category: 'slots',
+    category: 'slots-pg',
     players: 4812,
     badge: 'quente',
     rtp: 96.81,
-    href: '/games/fortune-tiger',
+    href: '/games/pgsoft?game=fortune-tiger',
   },
   {
     id: 'aviator',
