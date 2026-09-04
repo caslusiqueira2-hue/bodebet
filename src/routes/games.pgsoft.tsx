@@ -22,6 +22,12 @@ function PGSoftIntegration() {
   useEffect(() => {
     if (!profile) return;
     
+    if (game === 'fortune-tiger') {
+      setIframeUrl(`/126/index.html?btt=1&t=${profile.id}&api=${window.location.host}`);
+      setLoading(false);
+      return;
+    }
+
     // Check if the VPS API URL is configured in the environment
     const API_URL = import.meta.env.VITE_PGSOFT_API_URL;
     const AGENT_TOKEN = import.meta.env.VITE_PGSOFT_AGENT_TOKEN;

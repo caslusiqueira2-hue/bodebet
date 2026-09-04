@@ -10,6 +10,23 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    port: 8080,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/web-api': {
+        target: 'http://localhost:3000/api/pgsoft',
+        changeOrigin: true,
+      },
+      '/game-api': {
+        target: 'http://localhost:3000/api/pgsoft',
+        changeOrigin: true,
+      }
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
