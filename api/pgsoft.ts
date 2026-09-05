@@ -1,223 +1,38 @@
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://prawszeepeowvakyxldt.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_' + 'KiAXq0FYf5Wz9uusIwxKyg_w4gt6SsA';
-
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
-    return res.status(200).json({ msg: 'ok' });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    return res.status(200).end();
   }
 
+  const vpsUrl = `https://3.15.39.94${req.url}`;
+  
   try {
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const path = req.url;
-    let body = req.body;
-    if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch (e) {
-        body = Object.fromEntries(new URLSearchParams(body));
-      }
-    } else if (body instanceof Buffer) {
-      body = Object.fromEntries(new URLSearchParams(body.toString()));
-    }
-    
-    let urlObj = new URL(req.url, 'http://localhost');
-    const tk = body?.tk || req.query?.t || urlObj.searchParams.get('t') || body?.atk;
-    let userId = tk; 
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    const method = req.method;
+    const headers: any = {
+      'Content-Type': req.headers['content-type'] || 'application/json',
+    };
 
-    // 1. Session Verify
-    if (path.includes('/web-api/auth/session/v2/verifySession')) {
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (!profile) return res.status(200).json({ dt: null, err: { cd: "1302", msg: "OERR: User not found", tid: "YNGTHB25" } });
-      
-      const gamename = 'fortune-tiger';
-
-      return res.status(200).json({
-        dt: {
-          oj: { jid: 0 },
-          pid: profile.id,
-          pcd: "OKD15222646",
-          tk: tk,
-          st: 1,
-          geu: `game-api/${gamename}/`,
-          lau: "/game-api/lobby/",
-          bau: "web-api/game-proxy/",
-          cc: "BRL",
-          cs: "R$",
-          gm: [
-            {
-              gid: req.body.gi || "126",
-              msdt: 1638432092000,
-              medt: 1638432092000,
-              st: 1,
-              amsg: "",
-              rtp: { df: { min: 96.81, max: 96.81 } },
-              mxe: 2500,
-              mxehr: 8960913,
-            }
-          ],
-          uiogc: {
-            bb: 1, grtp: 1, gec: 0, cbu: 0, cl: 0, bf: 1, mr: 0, me: 1, bds: 0, res: 0, fgs: 1, tu: 1, mxehr: 0, ts: 1
-          },
-          swc: 1, nld: 0, clb: 1, wtd: 0, pgid: 39598816, crtp: 0
-        },
-        err: null
-      });
+    let bodyData = req.body;
+    if (bodyData && typeof bodyData === 'object' && !(bodyData instanceof Buffer)) {
+      bodyData = JSON.stringify(bodyData);
     }
 
-    // 2. GameInfo Get (Fortune Tiger)
-    if (path.includes('/game-api/fortune-tiger/v2/GameInfo/Get')) {
-      const { data: profile } = await supabase.from('profiles').select('balance').eq('id', userId).single();
-      const currentBal = profile?.balance || 0;
-      return res.status(200).json({
-        dt: {
-          fb: null,
-          wt: { mw: 5.0, bw: 20.0, mgw: 35.0, smgw: 50.0 },
-          maxwm: null,
-          cs: [0.08, 0.8, 3.0, 10.0],
-          ml: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-          mxl: 5,
-          bl: currentBal,
-          inwe: false,
-          iuwe: false,
-          ls: {
-            si: {
-              wc: 31,
-              ist: false,
-              itw: true,
-              fws: 0,
-              wp: null,
-              orl: [5, 7, 6, 5, 6, 3, 3, 7, 6],
-              lw: null,
-              irs: false,
-              gwt: -1,
-              fb: null,
-              ctw: 0,
-              pmt: null,
-              cwc: 0,
-              fstc: null,
-              pcwc: 0,
-              rwsp: null,
-              hashr: "0:2;5;4#3;3;6#7;3;6#MV#3.0#MT#1#MG#0#",
-              ml: "1",
-              cs: "0.08",
-              rl: [5, 7, 6, 5, 6, 3, 3, 7, 6],
-              sid: "1758600495495052800",
-              psid: "1758600495495052800",
-              st: 1,
-              nst: 1,
-              pf: 1,
-              aw: 0,
-              wid: 0,
-              wt: "C",
-              wk: "0_C",
-              wbn: null,
-              wfg: null,
-              blb: currentBal,
-              blab: currentBal,
-              bl: currentBal,
-              tb: 0.4,
-              tbb: 0.4,
-              tw: 0,
-              np: -0.4,
-              ocr: null,
-              mr: null,
-              ge: [1, 11]
-            }
-          },
-          cc: "BRL"
-        },
-        err: null
-      });
-    }
+    const response = await fetch(vpsUrl, {
+      method,
+      headers,
+      body: method !== 'GET' && method !== 'HEAD' ? bodyData : undefined,
+    });
 
-    // 3. Game Spin (Fortune Tiger)
-    if (path.includes('/game-api/fortune-tiger/v2/Spin')) {
-      const { cs, ml } = body; // Bet amount parameters
-      const betAmount = cs * ml * 5; // Tiger is 5 lines typically
+    const contentType = response.headers.get('content-type') || 'application/json';
+    const responseData = await response.text();
 
-      // Get user balance
-      const { data: profile } = await supabase.from('profiles').select('balance').eq('id', userId).single();
-      const currentBalance = profile?.balance || 0;
-
-      if (currentBalance < betAmount) {
-        // Insufficient funds json
-        return res.status(200).json({
-          dt: {
-            si: {
-              bl: currentBalance, blab: currentBalance, blb: currentBalance,
-              cs, ml, tb: betAmount, tbb: betAmount, tw: 0.0, np: 0.0
-            }
-          },
-          err: { cd: "3202", msg: "Not enough cash.", tid: "RACEVR16" }
-        });
-      }
-
-      // Deduct bet
-      const newBalance = currentBalance - betAmount;
-      await supabase.from('profiles').update({ balance: newBalance }).eq('id', userId);
-
-      // Return a LOSS spin logic (for simplicity, we always return a loss here, the house always wins)
-      return res.status(200).json({
-        dt: {
-          si: {
-            wc: 31,
-            ist: false,
-            itw: true,
-            fws: 0,
-            wp: null,
-            orl: [2, 3, 7, 5, 4, 3, 5, 4, 0], // Loss board
-            lw: null,
-            irs: false,
-            gwt: -1,
-            fb: null,
-            ctw: 0.0,
-            pmt: null,
-            cwc: 0,
-            fstc: null,
-            pcwc: 0,
-            rwsp: null,
-            hashr: "0:2;5;4#3;3;6#7;3;6#MV#3.0#MT#1#MG#0#",
-            ml: ml,
-            cs: cs,
-            rl: [2, 3, 7, 5, 4, 3, 5, 4, 0],
-            sid: Date.now().toString(),
-            psid: Date.now().toString(),
-            st: 1,
-            nst: 1,
-            pf: 1,
-            aw: 0.0,
-            wid: 0,
-            wt: "C",
-            wk: "0_C",
-            wbn: null,
-            wfg: null,
-            blb: currentBalance,
-            blab: newBalance,
-            bl: newBalance,
-            tb: betAmount,
-            tbb: betAmount,
-            tw: 0.0,
-            np: -betAmount,
-            ocr: null,
-            mr: null,
-            ge: [1, 11]
-          }
-        },
-        err: null
-      });
-    }
-
-    if (path.includes('/web-api/game-proxy/v2/Resources/GetByResourcesTypeIds')) {
-      return res.status(200).json({ dt: [], err: null });
-    }
-
-    // Default proxy for missing endpoints
-    return res.status(200).json({ dt: null, err: null });
-
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', contentType);
+    return res.status(response.status).send(responseData);
   } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(502).json({ error: 'VPS Gateway Error', details: error.message });
   }
 }

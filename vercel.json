@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/v1/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/"
     },
