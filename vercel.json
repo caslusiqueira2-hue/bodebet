@@ -21,6 +21,70 @@
       "destination": "/api/pgsoft"
     },
     {
+      "source": "/126/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/98/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/68/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/1543462/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/1695365/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/40/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/42/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/48/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/63/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/69/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/125/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/shared/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/tools/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/uma/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/favicon/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/gtm.js",
+      "destination": "/api/pgsoft"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

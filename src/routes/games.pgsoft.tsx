@@ -10,7 +10,7 @@ export const Route = createFileRoute('/games/pgsoft')({
 
 function PGSoftIntegration() {
   const { game } = Route.useSearch<{ game: string }>();
-  const { profile } = useProfile();
+  const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
@@ -20,12 +20,15 @@ function PGSoftIntegration() {
   const gameData = games.find((g) => g.id === game);
 
   useEffect(() => {
-    if (!profile) return;
+    if (profileLoading) return;
 
     const launchGame = async () => {
       try {
         setLoading(true);
         setError(null);
+
+        const userCode = profile?.id || 'demo_player';
+        const userBalance = profile ? (Number(profile.balance) || 100) : 500;
 
         const response = await fetch('/api/v1/game_launch', {
           method: 'POST',
@@ -33,16 +36,15 @@ function PGSoftIntegration() {
           body: JSON.stringify({
             agentToken: '508e1011-d04b-4d18-bb47-87261a0dd7c1',
             secretKey: 'b59cc5b2-a04f-48c1-8b6a-b3784ef8cf37',
-            user_code: profile.id,
+            user_code: userCode,
             game_code: game || 'fortune-tiger',
-            user_balance: Number(profile.balance) || 100,
+            user_balance: userBalance,
           }),
         });
 
         const data = await response.json();
         if (data.status === 1 && data.launch_url) {
           const urlObj = new URL(data.launch_url);
-          const currentOrigin = window.location.origin;
           const currentHost = window.location.host;
           
           urlObj.protocol = window.location.protocol;
@@ -62,7 +64,7 @@ function PGSoftIntegration() {
     };
 
     launchGame();
-  }, [profile, game]);
+  }, [profile, profileLoading, game]);
 
 
   return (

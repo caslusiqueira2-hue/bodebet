@@ -17,6 +17,7 @@ import { Route as GamesFortuneTigerRouteImport } from './routes/games.fortune-ti
 import { Route as GamesGatesOfOlympusRouteImport } from './routes/games.gates-of-olympus'
 import { Route as GamesMinesRouteImport } from './routes/games.mines'
 import { Route as GamesPenaltyLuckyRouteImport } from './routes/games.penalty-lucky'
+import { Route as GamesPgsoftRouteImport } from './routes/games.pgsoft'
 import { Route as GamesPlinkoRouteImport } from './routes/games.plinko'
 import { Route as GamesSweetCandyRouteImport } from './routes/games.sweet-candy'
 
@@ -60,6 +61,11 @@ const GamesPenaltyLuckyRoute = GamesPenaltyLuckyRouteImport.update({
   path: '/games/penalty-lucky',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesPgsoftRoute = GamesPgsoftRouteImport.update({
+  id: '/games/pgsoft',
+  path: '/games/pgsoft',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesPlinkoRoute = GamesPlinkoRouteImport.update({
   id: '/games/plinko',
   path: '/games/plinko',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/games/gates-of-olympus': typeof GamesGatesOfOlympusRoute
   '/games/mines': typeof GamesMinesRoute
   '/games/penalty-lucky': typeof GamesPenaltyLuckyRoute
+  '/games/pgsoft': typeof GamesPgsoftRoute
   '/games/plinko': typeof GamesPlinkoRoute
   '/games/sweet-candy': typeof GamesSweetCandyRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/games/gates-of-olympus': typeof GamesGatesOfOlympusRoute
   '/games/mines': typeof GamesMinesRoute
   '/games/penalty-lucky': typeof GamesPenaltyLuckyRoute
+  '/games/pgsoft': typeof GamesPgsoftRoute
   '/games/plinko': typeof GamesPlinkoRoute
   '/games/sweet-candy': typeof GamesSweetCandyRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/games/gates-of-olympus': typeof GamesGatesOfOlympusRoute
   '/games/mines': typeof GamesMinesRoute
   '/games/penalty-lucky': typeof GamesPenaltyLuckyRoute
+  '/games/pgsoft': typeof GamesPgsoftRoute
   '/games/plinko': typeof GamesPlinkoRoute
   '/games/sweet-candy': typeof GamesSweetCandyRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/games/gates-of-olympus'
     | '/games/mines'
     | '/games/penalty-lucky'
+    | '/games/pgsoft'
     | '/games/plinko'
     | '/games/sweet-candy'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/games/gates-of-olympus'
     | '/games/mines'
     | '/games/penalty-lucky'
+    | '/games/pgsoft'
     | '/games/plinko'
     | '/games/sweet-candy'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/games/gates-of-olympus'
     | '/games/mines'
     | '/games/penalty-lucky'
+    | '/games/pgsoft'
     | '/games/plinko'
     | '/games/sweet-candy'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   GamesGatesOfOlympusRoute: typeof GamesGatesOfOlympusRoute
   GamesMinesRoute: typeof GamesMinesRoute
   GamesPenaltyLuckyRoute: typeof GamesPenaltyLuckyRoute
+  GamesPgsoftRoute: typeof GamesPgsoftRoute
   GamesPlinkoRoute: typeof GamesPlinkoRoute
   GamesSweetCandyRoute: typeof GamesSweetCandyRoute
 }
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesPenaltyLuckyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/pgsoft': {
+      id: '/games/pgsoft'
+      path: '/games/pgsoft'
+      fullPath: '/games/pgsoft'
+      preLoaderRoute: typeof GamesPgsoftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games/plinko': {
       id: '/games/plinko'
       path: '/games/plinko'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   GamesGatesOfOlympusRoute: GamesGatesOfOlympusRoute,
   GamesMinesRoute: GamesMinesRoute,
   GamesPenaltyLuckyRoute: GamesPenaltyLuckyRoute,
+  GamesPgsoftRoute: GamesPgsoftRoute,
   GamesPlinkoRoute: GamesPlinkoRoute,
   GamesSweetCandyRoute: GamesSweetCandyRoute,
 }
