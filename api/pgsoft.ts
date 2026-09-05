@@ -15,21 +15,17 @@ export default async function handler(req: any, res: any) {
 
     let bodyData: any = undefined;
     if (method !== 'GET' && method !== 'HEAD') {
-      if (req.headers['content-type']) {
-        headers['content-type'] = req.headers['content-type'];
-      }
       if (req.body && typeof req.body === 'object' && !(req.body instanceof Buffer)) {
         bodyData = JSON.stringify(req.body);
-        if (!headers['content-type']) {
-          headers['content-type'] = 'application/json';
-        }
+        headers['content-type'] = 'application/json';
       } else if (typeof req.body === 'string') {
         bodyData = req.body;
-        if (!headers['content-type']) {
-          headers['content-type'] = 'text/plain;charset=UTF-8';
-        }
+        headers['content-type'] = req.headers['content-type'] || 'text/plain;charset=UTF-8';
       } else if (req.body instanceof Buffer) {
         bodyData = req.body;
+        if (req.headers['content-type']) {
+          headers['content-type'] = req.headers['content-type'];
+        }
       }
     }
 
