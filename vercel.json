@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/gold_api/(.*)",
+      "destination": "/api/gold_api"
+    },
+    {
       "source": "/api/v1/(.*)",
       "destination": "/api/pgsoft"
     },
