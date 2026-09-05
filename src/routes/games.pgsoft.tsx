@@ -23,7 +23,8 @@ function PGSoftIntegration() {
     if (!profile) return;
     
     if (game === 'fortune-tiger') {
-      setIframeUrl(`/126/index.html?btt=1&t=${profile.id}&api=${window.location.host}`);
+      const apiUrl = window.location.origin.replace('http://', '').replace('https://', '');
+      setIframeUrl(`/126/index.html?btt=1&t=${profile.id}&api=${apiUrl}`);
       setLoading(false);
       return;
     }

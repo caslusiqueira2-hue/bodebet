@@ -10,10 +10,20 @@ export default async function handler(req: any, res: any) {
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const path = req.url; // e.g. /web-api/auth/session/v2/verifySession
+    const path = req.url;
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        body = Object.fromEntries(new URLSearchParams(body));
+      }
+    } else if (body instanceof Buffer) {
+      body = Object.fromEntries(new URLSearchParams(body.toString()));
+    }
     
-    // Extract token
-    const tk = req.body?.tk || req.query?.t || req.body?.atk;
+    let urlObj = new URL(req.url, 'http://localhost');
+    const tk = body?.tk || req.query?.t || urlObj.searchParams.get('t') || body?.atk;
     let userId = tk; 
 
     // 1. Session Verify
@@ -59,6 +69,7 @@ export default async function handler(req: any, res: any) {
     // 2. GameInfo Get (Fortune Tiger)
     if (path.includes('/game-api/fortune-tiger/v2/GameInfo/Get')) {
       const { data: profile } = await supabase.from('profiles').select('balance').eq('id', userId).single();
+      const currentBal = profile?.balance || 0;
       return res.status(200).json({
         dt: {
           fb: null,
@@ -67,49 +78,49 @@ export default async function handler(req: any, res: any) {
           cs: [0.08, 0.8, 3.0, 10.0],
           ml: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
           mxl: 5,
-          bl: profile?.balance || 0,
+          bl: currentBal,
           inwe: false,
           iuwe: false,
           ls: {
             si: {
-              wc: 0,
+              wc: 31,
               ist: false,
-              itw: false,
+              itw: true,
               fws: 0,
               wp: null,
-              orl: [5, 6, 4, 3, 7, 2, 3, 0, 7], // Random initial board
+              orl: [5, 7, 6, 5, 6, 3, 3, 7, 6],
               lw: null,
               irs: false,
               gwt: -1,
               fb: null,
-              ctw: 0.0,
+              ctw: 0,
               pmt: null,
               cwc: 0,
               fstc: null,
               pcwc: 0,
               rwsp: null,
-              hashr: null,
-              ml: 1,
-              cs: 0.08,
-              rl: [5, 6, 4, 3, 7, 2, 3, 0, 7],
-              sid: "123456",
-              psid: "123456",
+              hashr: "0:2;5;4#3;3;6#7;3;6#MV#3.0#MT#1#MG#0#",
+              ml: "1",
+              cs: "0.08",
+              rl: [5, 7, 6, 5, 6, 3, 3, 7, 6],
+              sid: "1758600495495052800",
+              psid: "1758600495495052800",
               st: 1,
               nst: 1,
               pf: 1,
-              aw: 0.0,
+              aw: 0,
               wid: 0,
               wt: "C",
               wk: "0_C",
               wbn: null,
               wfg: null,
-              blb: profile?.balance || 0,
-              blab: profile?.balance || 0,
-              bl: profile?.balance || 0,
-              tb: 0.0,
-              tbb: 0.0,
-              tw: 0.0,
-              np: 0.0,
+              blb: currentBal,
+              blab: currentBal,
+              bl: currentBal,
+              tb: 0.4,
+              tbb: 0.4,
+              tw: 0,
+              np: -0.4,
               ocr: null,
               mr: null,
               ge: [1, 11]
@@ -123,7 +134,7 @@ export default async function handler(req: any, res: any) {
 
     // 3. Game Spin (Fortune Tiger)
     if (path.includes('/game-api/fortune-tiger/v2/Spin')) {
-      const { cs, ml } = req.body; // Bet amount parameters
+      const { cs, ml } = body; // Bet amount parameters
       const betAmount = cs * ml * 5; // Tiger is 5 lines typically
 
       // Get user balance
