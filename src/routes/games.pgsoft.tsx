@@ -5,13 +5,20 @@ import { useProfile } from '@/hooks/use-profile';
 import { games } from '@/lib/casino-data';
 
 export const Route = createFileRoute('/games/pgsoft')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    game: typeof search.game === 'string' ? search.game : 'fortune-tiger',
+  }),
   component: PGSoftIntegration,
 });
 
 function PGSoftIntegration() {
-  const { game } = Route.useSearch<{ game: string }>();
-  const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
+  const searchParam = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('game') || 'fortune-tiger')
+    : 'fortune-tiger';
+  const game = searchParam;
+
+  const { profile, loading: profileLoading } = useProfile();
   
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +28,8 @@ function PGSoftIntegration() {
 
   useEffect(() => {
     if (profileLoading) return;
+
+    let isSubscribed = true;
 
     const launchGame = async () => {
       try {
@@ -43,6 +52,8 @@ function PGSoftIntegration() {
         });
 
         const data = await response.json();
+        if (!isSubscribed) return;
+
         if (data.status === 1 && data.launch_url) {
           const urlObj = new URL(data.launch_url);
           const currentHost = window.location.host;
@@ -57,51 +68,50 @@ function PGSoftIntegration() {
           setError(data.message || 'Erro ao inicializar o jogo no servidor.');
         }
       } catch (err: any) {
+        if (!isSubscribed) return;
         setError('Falha ao conectar à API PG Soft: ' + (err?.message || 'Erro desconhecido'));
       } finally {
-        setLoading(false);
+        if (isSubscribed) setLoading(false);
       }
     };
 
     launchGame();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [profile, profileLoading, game]);
 
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white flex flex-col relative">
-      <div className="absolute top-4 left-4 z-50">
+    <div className="fixed inset-0 z-50 bg-black text-white flex flex-col">
+      <div className="absolute top-3 left-3 z-50">
         <button 
           onClick={() => navigate({ to: '/' })}
-          className="flex items-center gap-2 bg-black/50 hover:bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 transition-colors"
+          className="flex items-center gap-2 bg-black/70 hover:bg-black/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-bold uppercase tracking-wider">Sair</span>
+          <span className="text-xs font-bold uppercase tracking-wider">Voltar</span>
         </button>
       </div>
 
       {loading && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-neutral-950">
           <Loader2 className="w-12 h-12 animate-spin text-[#d4af37]" />
-          <p className="font-bold uppercase tracking-widest text-[#d4af37]/80">Conectando ao provedor...</p>
+          <p className="font-bold uppercase tracking-widest text-[#d4af37]/80 text-sm">Carregando {gameData?.name || 'Jogo PG Soft'}...</p>
         </div>
       )}
 
       {error && !loading && (
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-xl bg-red-950/40 border border-red-500/50 p-6 sm:p-8 rounded-3xl flex flex-col items-center text-center gap-6">
-            <AlertCircle className="w-16 h-16 text-red-500 mb-2" />
-            <h2 className="text-xl sm:text-2xl font-black uppercase text-red-400">Servidor Desconectado</h2>
-            <p className="text-white/80 whitespace-pre-wrap text-sm leading-relaxed">{error}</p>
+        <div className="flex-1 flex items-center justify-center p-4 bg-neutral-950">
+          <div className="max-w-md bg-red-950/40 border border-red-500/50 p-6 sm:p-8 rounded-3xl flex flex-col items-center text-center gap-5">
+            <AlertCircle className="w-14 h-14 text-red-500" />
+            <h2 className="text-xl font-bold uppercase text-red-400">Falha na Inicialização</h2>
+            <p className="text-white/80 text-sm leading-relaxed">{error}</p>
             
-            <div className="bg-black/50 p-4 rounded-xl w-full text-left font-mono text-xs text-white/60 border border-white/5">
-              VITE_PGSOFT_API_URL=http://IP_DA_SUA_VPS:3000<br/>
-              VITE_PGSOFT_AGENT_TOKEN=seu_token<br/>
-              VITE_PGSOFT_SECRET_KEY=sua_secret
-            </div>
-
             <button 
               onClick={() => navigate({ to: '/' })}
-              className="w-full py-4 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-colors uppercase mt-2"
+              className="w-full py-3.5 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-colors uppercase mt-2 text-sm"
             >
               Voltar ao Cassino
             </button>
@@ -110,10 +120,11 @@ function PGSoftIntegration() {
       )}
 
       {iframeUrl && !loading && !error && (
-        <div className="flex-1 w-full h-screen bg-[#111]">
+        <div className="flex-1 w-full h-full bg-black flex items-center justify-center overflow-hidden">
           <iframe 
             src={iframeUrl} 
-            className="w-full h-full border-none mx-auto sm:max-w-[430px] sm:shadow-2xl bg-black"
+            className="w-full h-full border-none sm:max-w-[430px] sm:shadow-2xl bg-black"
+            allow="autoplay; fullscreen; screen-wake-lock; orientation-lock"
             allowFullScreen
           />
         </div>

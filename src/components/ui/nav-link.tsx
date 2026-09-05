@@ -7,7 +7,7 @@ type NavLinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> 
 
 /** Drop-in replacement for next/link backed by TanStack Router. */
 export default function Link({ href, prefetch: _prefetch, ...props }: NavLinkProps) {
-  if (/^(https?:|mailto:|tel:|#)/.test(href)) {
+  if (/^(https?:|mailto:|tel:|#)/.test(href) || href.includes('?')) {
     return <a href={href} {...props} />;
   }
   return <RouterLink to={href as never} {...props} />;

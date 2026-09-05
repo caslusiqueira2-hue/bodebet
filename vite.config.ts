@@ -14,15 +14,23 @@ export default defineConfig({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://bodebet.vercel.app',
+        changeOrigin: true,
+      },
+      '/gold_api': {
+        target: 'https://bodebet.vercel.app',
         changeOrigin: true,
       },
       '/web-api': {
-        target: 'http://localhost:3000/api/pgsoft',
+        target: 'https://bodebet.vercel.app',
         changeOrigin: true,
       },
       '/game-api': {
-        target: 'http://localhost:3000/api/pgsoft',
+        target: 'https://bodebet.vercel.app',
+        changeOrigin: true,
+      },
+      '^/(126|98|68|1543462|1695365|40|42|48|63|69|125|shared|tools|uma|favicon|gtm.js)': {
+        target: 'https://bodebet.vercel.app',
         changeOrigin: true,
       }
     }
