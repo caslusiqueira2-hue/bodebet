@@ -117,12 +117,14 @@ function PGSoftIntegration() {
       )}
 
       {iframeUrl && !loading && !error && (
-        <div className="flex-1 w-full h-screen">
-          <iframe 
-            src={iframeUrl} 
-            className="w-full h-full border-none"
-            allowFullScreen
-          />
+        <div className="flex-1 w-full h-screen flex items-center justify-center bg-black/90 p-0 sm:p-4">
+          <div className="w-full h-full sm:max-w-[430px] sm:h-[90vh] sm:rounded-2xl overflow-hidden relative shadow-2xl shadow-red-900/20 border-0 sm:border border-white/10">
+            <iframe 
+              src={iframeUrl} 
+              className="w-full h-full border-none bg-black"
+              allowFullScreen
+            />
+          </div>
         </div>
       )}
     </div>
