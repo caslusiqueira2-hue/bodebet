@@ -5,6 +5,14 @@
       "destination": "/api/gold_api"
     },
     {
+      "source": "/socket.io/(.*)",
+      "destination": "/api/pgsoft"
+    },
+    {
+      "source": "/socket.io",
+      "destination": "/api/pgsoft"
+    },
+    {
       "source": "/api/v1/(.*)",
       "destination": "/api/pgsoft"
     },
