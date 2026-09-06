@@ -56,7 +56,15 @@ function RootComponent() {
     return <div className="min-h-screen bg-background flex items-center justify-center text-white">Carregando...</div>;
   }
 
-  if (!session) {
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isPublicRoute = 
+    pathname.startsWith('/suporte') || 
+    pathname.startsWith('/termos') || 
+    pathname.startsWith('/privacidade') || 
+    pathname.startsWith('/jogo-responsavel') || 
+    pathname.startsWith('/ajuda');
+
+  if (!session && !isPublicRoute) {
     return <Auth />;
   }
 
