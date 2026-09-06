@@ -21,6 +21,7 @@ export function SiteHeader() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
+    window.location.href = '/'
   }
 
   return (
@@ -159,6 +160,20 @@ export function SiteHeader() {
               {link.label}
             </a>
           ))}
+
+          <div className="mt-1 border-t border-white/10 pt-2 pb-2">
+            <button
+              type="button"
+              onClick={async () => {
+                setOpen(false)
+                await handleSignOut()
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300 active:scale-[0.99]"
+            >
+              <LogOut className="size-4 text-red-400" />
+              <span>Sair da conta</span>
+            </button>
+          </div>
         </nav>
       ) : null}
     </header>
