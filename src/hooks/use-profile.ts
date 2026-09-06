@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export interface Profile {
@@ -107,11 +107,17 @@ export function useProfile() {
     };
   }, []);
 
-  const persistBalance = async (newBalance: number) => {
-    if (!profile) return;
+  const profileRef = useRef<Profile | null>(profile);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
+
+  const persistBalance = useCallback(async (newBalance: number) => {
+    const cur = profileRef.current;
+    if (!cur) return;
     setProfile(prev => prev ? { ...prev, balance: newBalance } : null);
-    await supabase.from('profiles').update({ balance: newBalance }).eq('id', profile.id);
-  };
+    await supabase.from('profiles').update({ balance: newBalance }).eq('id', cur.id);
+  }, []);
 
   const updateProfileData = async (updates: Partial<Profile>) => {
     if (!profile) return;

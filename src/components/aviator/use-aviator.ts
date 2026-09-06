@@ -8,6 +8,7 @@ import {
   type LiveBet,
 } from '@/lib/aviator-engine'
 import { useProfile } from '@/hooks/use-profile'
+import { formatBRL } from '@/lib/casino-data'
 
 export type Phase = 'betting' | 'flying' | 'crashed'
 
@@ -42,26 +43,23 @@ export function useAviator() {
   useEffect(() => {
     if (profile?.balance !== undefined) {
       setBalance(profile.balance)
+      balanceRef.current = profile.balance
     }
   }, [profile?.balance])
 
-  // Espelhos mutáveis: o loop de animação lê refs para evitar closures velhas.
+  // Espelhos mutáveis: o loop de animação lê refs para evitar closures velhas e cancelamentos indevidos.
   const phaseRef = useRef<Phase>('betting')
   const betRef = useRef<ActiveBet | null>(null)
   const queuedRef = useRef<number | null>(null)
   const autoRef = useRef<number | null>(null)
   const crashRef = useRef(1)
   const startRef = useRef(0)
+  const balanceRef = useRef(profile?.balance ?? 0)
+  const persistBalanceRef = useRef(persistBalance)
 
-  const syncBet = useCallback((next: ActiveBet | null) => {
-    betRef.current = next
-    setBet(next)
-  }, [])
-
-  const syncQueued = useCallback((next: number | null) => {
-    queuedRef.current = next
-    setQueuedBet(next)
-  }, [])
+  useEffect(() => {
+    persistBalanceRef.current = persistBalance
+  }, [persistBalance])
 
   useEffect(() => {
     const parsed = Number.parseFloat(autoCashout.replace(',', '.'))
@@ -69,28 +67,40 @@ export function useAviator() {
   }, [autoCashout])
 
   /** Encerra a aposta do jogador pagando o multiplicador informado e creditando no saldo real. */
-  const settleCashout = useCallback(
-    (at: number) => {
-      const current = betRef.current
-      if (!current || current.cashedAt !== null) return
+  const settleCashout = useCallback((at: number) => {
+    const current = betRef.current
+    if (!current || current.cashedAt !== null) return
 
-      const payout = current.amount * at
-      syncBet({ ...current, cashedAt: at })
-      setBalance((value) => {
-        const next = value + payout
-        persistBalance(next)
-        return next
-      })
-      setNotice(`Retirada em ${at.toFixed(2)}x · +R$ ${payout.toFixed(2)}`)
-    },
-    [syncBet, persistBalance],
-  )
+    const payout = Math.round(current.amount * at * 100) / 100
+    const updatedBet = { ...current, cashedAt: at }
+    betRef.current = updatedBet
+    setBet(updatedBet)
+
+    setBalance((prev) => {
+      const next = Math.round((prev + payout) * 100) / 100
+      balanceRef.current = next
+      if (persistBalanceRef.current) {
+        persistBalanceRef.current(next)
+      }
+      return next
+    })
+
+    setNotice(`Retirada em ${at.toFixed(2)}x · +${formatBRL(payout)}`)
+  }, [])
+
+  const settleCashoutRef = useRef(settleCashout)
+  useEffect(() => {
+    settleCashoutRef.current = settleCashout
+  }, [settleCashout])
 
   const cashOut = useCallback(() => {
     if (phaseRef.current !== 'flying') return
-    settleCashout(multiplierAt((performance.now() - startRef.current) / 1000))
-  }, [settleCashout])
+    const seconds = (performance.now() - startRef.current) / 1000
+    const currentMultiplier = multiplierAt(seconds)
+    settleCashoutRef.current(currentMultiplier)
+  }, [])
 
+  // Loop perpétuo de animação e rodadas: roda UMA ÚNICA VEZ e nunca é interrompido por apostas ou re-renders
   useEffect(() => {
     let frame = 0
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -116,7 +126,7 @@ export function useAviator() {
               amount: current.amount,
               cashedAt: current.cashedAt,
               crashedAt,
-              payout: current.cashedAt ? current.amount * current.cashedAt : 0,
+              payout: current.cashedAt ? Math.round(current.amount * current.cashedAt * 100) / 100 : 0,
             },
             ...prev,
           ].slice(0, 12),
@@ -144,14 +154,14 @@ export function useAviator() {
       setElapsed(seconds)
       setMultiplier(value)
 
-      // Retirada automática do jogador.
+      // Retirada automática do jogador
       const auto = autoRef.current
       const current = betRef.current
       if (auto && current && current.cashedAt === null && value >= auto) {
-        settleCashout(auto)
+        settleCashoutRef.current(auto)
       }
 
-      // Apostadores na rodada.
+      // Apostadores simultâneos na rodada
       setLiveBets((prev) => {
         let changed = false
         const next = prev.map((item) => {
@@ -184,10 +194,19 @@ export function useAviator() {
       setElapsed(0)
       setLiveBets(createLiveBets())
 
-      // A aposta enfileirada entra automaticamente na nova rodada.
+      // A aposta enfileirada entra automaticamente na nova rodada
       const queued = queuedRef.current
-      syncBet(queued ? { amount: queued, cashedAt: null } : null)
-      syncQueued(null)
+      if (queued !== null) {
+        const newBet = { amount: queued, cashedAt: null }
+        betRef.current = newBet
+        setBet(newBet)
+        queuedRef.current = null
+        setQueuedBet(null)
+      } else {
+        // Limpa a aposta finalizada da rodada anterior
+        betRef.current = null
+        setBet(null)
+      }
 
       let left = BETTING_MS
       setCountdown(left / 1000)
@@ -196,8 +215,11 @@ export function useAviator() {
         if (cancelled) return
         left -= 100
         setCountdown(Math.max(0, left / 1000))
-        if (left <= 0) startFlying()
-        else timer = setTimeout(tick, 100)
+        if (left <= 0) {
+          startFlying()
+        } else {
+          timer = setTimeout(tick, 100)
+        }
       }
       timer = setTimeout(tick, 100)
     }
@@ -208,56 +230,64 @@ export function useAviator() {
       cancelled = true
       clear()
     }
-  }, [settleCashout, syncBet, syncQueued])
+  }, []) // <--- VAZIO: Garante que o avião suba ininterruptamente!
 
-  const placeBet = useCallback(
-    (amount: number) => {
-      if (!Number.isFinite(amount) || amount <= 0) return
-      if (amount > balance) {
-        setNotice('Saldo insuficiente para esta aposta')
-        return
-      }
-      setBalance((value) => {
-        const next = Math.max(0, value - amount)
-        persistBalance(next)
-        return next
-      })
+  const placeBet = useCallback((amount: number) => {
+    if (!Number.isFinite(amount) || amount <= 0) return
+    const curBal = balanceRef.current
+    if (amount > curBal) {
+      setNotice('Saldo insuficiente para esta aposta')
+      return
+    }
 
-      if (phaseRef.current === 'betting') {
-        syncBet({ amount, cashedAt: null })
-        setNotice(null)
-      } else {
-        syncQueued(amount)
-        setNotice('Aposta registrada para a próxima rodada')
-      }
-    },
-    [balance, syncBet, syncQueued, persistBalance],
-  )
+    const nextBal = Math.max(0, Math.round((curBal - amount) * 100) / 100)
+    balanceRef.current = nextBal
+    setBalance(nextBal)
+    if (persistBalanceRef.current) {
+      persistBalanceRef.current(nextBal)
+    }
+
+    if (phaseRef.current === 'betting') {
+      const newBet = { amount, cashedAt: null }
+      betRef.current = newBet
+      setBet(newBet)
+      setNotice(null)
+    } else {
+      queuedRef.current = amount
+      setQueuedBet(amount)
+      setNotice('Aposta registrada para a próxima rodada')
+    }
+  }, [])
 
   const cancelBet = useCallback(() => {
     if (queuedRef.current !== null) {
-      const refund = queuedRef.current ?? 0
-      setBalance((value) => {
-        const next = value + refund
-        persistBalance(next)
-        return next
-      })
-      syncQueued(null)
+      const refund = queuedRef.current
+      queuedRef.current = null
+      setQueuedBet(null)
+      const nextBal = Math.round((balanceRef.current + refund) * 100) / 100
+      balanceRef.current = nextBal
+      setBalance(nextBal)
+      if (persistBalanceRef.current) {
+        persistBalanceRef.current(nextBal)
+      }
       setNotice(null)
       return
     }
+
     const current = betRef.current
     if (phaseRef.current === 'betting' && current && current.cashedAt === null) {
       const refund = current.amount
-      setBalance((value) => {
-        const next = value + refund
-        persistBalance(next)
-        return next
-      })
-      syncBet(null)
+      betRef.current = null
+      setBet(null)
+      const nextBal = Math.round((balanceRef.current + refund) * 100) / 100
+      balanceRef.current = nextBal
+      setBalance(nextBal)
+      if (persistBalanceRef.current) {
+        persistBalanceRef.current(nextBal)
+      }
       setNotice(null)
     }
-  }, [syncBet, syncQueued, persistBalance])
+  }, [])
 
   return {
     phase,
