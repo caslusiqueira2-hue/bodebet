@@ -36,8 +36,8 @@ function PGSoftIntegration() {
         setLoading(true);
         setError(null);
 
-        const userCode = profile?.id || 'demo_player';
-        const userBalance = profile ? (Number(profile.balance) || 100) : 500;
+        const userCode = profile?.id || ('player_' + Math.random().toString(36).substring(2, 9));
+        const userBalance = profile ? (Number(profile.balance) || 100) : 100;
 
         const response = await fetch('/api/v1/game_launch', {
           method: 'POST',

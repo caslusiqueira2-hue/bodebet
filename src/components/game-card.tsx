@@ -14,23 +14,33 @@ const badgeStyles: Record<NonNullable<Game['badge']>, string> = {
 const fallbackGradients: Record<string, string> = {
   'fortune-tiger': 'from-orange-600 via-red-700 to-yellow-800',
   'aviator': 'from-red-700 via-rose-800 to-slate-900',
-  'gates-olympus': 'from-purple-700 via-violet-800 to-indigo-900',
   'mines': 'from-emerald-700 via-green-800 to-teal-900',
-  'plinko': 'from-blue-600 via-cyan-700 to-indigo-800',
-  'penalty-lucky': 'from-green-600 via-lime-700 to-emerald-800',
-  'blackjack': 'from-slate-700 via-zinc-800 to-gray-900',
-  'sweet-candy': 'from-pink-600 via-fuchsia-700 to-purple-800',
+  'double': 'from-rose-600 via-red-700 to-zinc-900',
+  'fortune-ox': 'from-amber-600 via-orange-700 to-red-900',
+  'fortune-mouse': 'from-rose-600 via-red-700 to-pink-900',
+  'fortune-rabbit': 'from-amber-500 via-yellow-600 to-orange-800',
+  'fortune-dragon': 'from-emerald-600 via-teal-700 to-cyan-900',
+  'double-fortune': 'from-red-600 via-rose-700 to-amber-800',
+  'ganesha-gold': 'from-amber-500 via-yellow-600 to-red-800',
+  'jungle-delight': 'from-green-600 via-emerald-700 to-lime-900',
+  'bikini-paradise': 'from-cyan-500 via-blue-600 to-indigo-800',
+  'dragon-tiger-luck': 'from-orange-600 via-amber-700 to-red-900',
 }
 
 const gameEmoji: Record<string, string> = {
   'fortune-tiger': '🐯',
   'aviator': '✈️',
-  'gates-olympus': '⚡',
   'mines': '💣',
-  'plinko': '🔵',
-  'penalty-lucky': '⚽',
-  'blackjack': '🃏',
-  'sweet-candy': '🍬',
+  'double': '🎲',
+  'fortune-ox': '🐂',
+  'fortune-mouse': '🐭',
+  'fortune-rabbit': '🐰',
+  'fortune-dragon': '🐲',
+  'double-fortune': '🧧',
+  'ganesha-gold': '🐘',
+  'jungle-delight': '🌴',
+  'bikini-paradise': '🏖️',
+  'dragon-tiger-luck': '🐉',
 }
 
 export function GameCard({ game }: { game: Game }) {

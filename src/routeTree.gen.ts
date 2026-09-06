@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as GamesAviatorRouteImport } from './routes/games.aviator'
 import { Route as GamesDoubleRouteImport } from './routes/games.double'
 import { Route as GamesFortuneTigerRouteImport } from './routes/games.fortune-tiger'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CarteiraRoute = CarteiraRouteImport.update({
+  id: '/carteira',
+  path: '/carteira',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesAviatorRoute = GamesAviatorRouteImport.update({
@@ -80,6 +86,7 @@ const GamesSweetCandyRoute = GamesSweetCandyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/carteira': typeof CarteiraRoute
   '/games/aviator': typeof GamesAviatorRoute
   '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/carteira': typeof CarteiraRoute
   '/games/aviator': typeof GamesAviatorRoute
   '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/carteira': typeof CarteiraRoute
   '/games/aviator': typeof GamesAviatorRoute
   '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/carteira'
     | '/games/aviator'
     | '/games/double'
     | '/games/fortune-tiger'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/carteira'
     | '/games/aviator'
     | '/games/double'
     | '/games/fortune-tiger'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/carteira'
     | '/games/aviator'
     | '/games/double'
     | '/games/fortune-tiger'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  CarteiraRoute: typeof CarteiraRoute
   GamesAviatorRoute: typeof GamesAviatorRoute
   GamesDoubleRoute: typeof GamesDoubleRoute
   GamesFortuneTigerRoute: typeof GamesFortuneTigerRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/carteira': {
+      id: '/carteira'
+      path: '/carteira'
+      fullPath: '/carteira'
+      preLoaderRoute: typeof CarteiraRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/aviator': {
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  CarteiraRoute: CarteiraRoute,
   GamesAviatorRoute: GamesAviatorRoute,
   GamesDoubleRoute: GamesDoubleRoute,
   GamesFortuneTigerRoute: GamesFortuneTigerRoute,

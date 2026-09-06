@@ -4,7 +4,7 @@ import { GameShell } from '@/components/game-shell'
 
 const title = 'Aviator · BodeBet'
 const description =
-  'Jogue Aviator no modo demonstração: aposte, acompanhe o multiplicador subir e retire antes do avião voar embora.'
+  'Jogue Aviator em tempo real: aposte, acompanhe o multiplicador subir e retire seus ganhos antes do avião voar embora.'
 
 export const Route = createFileRoute('/games/aviator')({
   head: () => ({

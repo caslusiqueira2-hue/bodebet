@@ -6,9 +6,9 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { WinnersTicker } from '@/components/winners-ticker'
 
-const title = 'BodeBet — Cassino Online, Slots e Jogos Originais'
+const title = 'BodeBet — Cassino Online, Slots PG e Jogos Originais'
 const description =
-  'Cassino online com slots, jogos ao vivo, crash games e originais como Plinko e Mines. Bônus de boas-vindas de até 500% no primeiro depósito.'
+  'Cassino online com slots PG Soft, crash games e originais como Mines, Double e Aviator. Bônus de boas-vindas e saques rápidos via Pix.'
 
 export const Route = createFileRoute('/')({
   head: () => ({

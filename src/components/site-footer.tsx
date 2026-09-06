@@ -3,7 +3,7 @@ import { BrandLogo } from '@/components/brand-logo'
 const columns = [
   {
     title: 'Cassino',
-    links: ['Slots', 'Ao vivo', 'Crash games', 'Originais', 'Provedores'],
+    links: ['Slots PG', 'Crash games', 'Originais', 'Mines', 'Aviator', 'Double'],
   },
   {
     title: 'Conta',
@@ -23,8 +23,8 @@ export function SiteFooter() {
           <div className="flex flex-col gap-3">
             <BrandLogo />
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Plataforma de entretenimento com cassino online, jogos ao vivo e originais.
-              Pagamentos via Pix em até 5 minutos.
+              Plataforma de entretenimento com slots PG Soft, crash games e originais exclusivos.
+              Pagamentos e saques instantâneos via Pix.
             </p>
           </div>
 
@@ -52,7 +52,7 @@ export function SiteFooter() {
             Proibido para menores de 18 anos. Jogue com responsabilidade.
           </p>
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} BodeBet. Demonstração de interface.
+            © {new Date().getFullYear()} BodeBet. Todos os direitos reservados.
           </p>
         </div>
       </div>
