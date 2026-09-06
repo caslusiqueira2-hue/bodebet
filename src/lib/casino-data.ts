@@ -59,7 +59,7 @@ export const games: Game[] = [
     id: 'double',
     name: 'Double',
     provider: 'BodeBet Originals',
-    image: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%231f2937"><rect width="100" height="100" rx="15"/><circle cx="50" cy="50" r="30" fill="%23e11d48"/><path d="M50 30L65 50L50 70L35 50Z" fill="white"/></svg>',
+    image: '/games/double.jpg',
     category: 'originais',
     players: 3042,
     badge: 'novo',
