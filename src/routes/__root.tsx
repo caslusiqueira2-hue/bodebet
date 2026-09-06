@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Auth } from '@/components/Auth';
 import { DepositModal } from '@/components/DepositModal';
 import { ProfileCompletionModal } from '@/components/ProfileCompletionModal';
+import { MobileTabbar } from '@/components/mobile-tabbar';
 import type { Session } from '@supabase/supabase-js';
 
 interface RouterContext {
@@ -71,6 +72,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <MobileTabbar />
       {session && (
         <>
           <DepositModal 

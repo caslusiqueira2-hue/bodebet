@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { GameLibrary } from '@/components/game-library'
-import { MobileTabbar } from '@/components/mobile-tabbar'
 import { PromoCarousel } from '@/components/promo-carousel'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
@@ -34,7 +33,6 @@ function HomePage() {
       </main>
 
       <SiteFooter />
-      <MobileTabbar />
     </div>
   )
 }

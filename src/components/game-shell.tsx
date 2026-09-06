@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import Link from '@/components/ui/nav-link'
 import { ChevronLeft, Info } from 'lucide-react'
-import { MobileTabbar } from '@/components/mobile-tabbar'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 
@@ -57,7 +56,6 @@ export function GameShell({ title, meta, howToPlay, children }: GameShellProps) 
       </main>
 
       <SiteFooter />
-      <MobileTabbar />
     </div>
   )
 }

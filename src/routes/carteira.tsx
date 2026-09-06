@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
-import { MobileTabbar } from '@/components/mobile-tabbar'
 import { DepositModal } from '@/components/DepositModal'
 import { useProfile } from '@/hooks/use-profile'
 import { supabase } from '@/lib/supabase'
@@ -409,7 +408,6 @@ function CarteiraPage() {
       )}
 
       <SiteFooter />
-      <MobileTabbar />
     </div>
   )
 }

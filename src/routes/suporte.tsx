@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
-import { MobileTabbar } from '@/components/mobile-tabbar'
 import { cn } from '@/lib/utils'
 
 export type SupportTab = 'ajuda' | 'termos' | 'privacidade' | 'jogo-responsavel'
@@ -627,7 +626,6 @@ function SuportePage() {
       </main>
 
       <SiteFooter />
-      <MobileTabbar />
     </div>
   )
 }

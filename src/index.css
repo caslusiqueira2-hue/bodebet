@@ -71,8 +71,24 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    position: relative;
+  }
+  #root {
+    width: 100%;
+    min-height: 100%;
+    position: relative;
   }
 }
 

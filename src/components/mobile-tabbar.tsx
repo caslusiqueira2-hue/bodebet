@@ -7,8 +7,15 @@ export function MobileTabbar() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentPath(window.location.pathname)
+      const handleLocation = () => setCurrentPath(window.location.pathname)
+      window.addEventListener('popstate', handleLocation)
+      return () => window.removeEventListener('popstate', handleLocation)
     }
   }, [])
+
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+    return null
+  }
 
   const tabs = [
     { label: 'Cassino', icon: Dices, href: '/#jogos', active: currentPath === '/' || currentPath === '' },
@@ -20,7 +27,17 @@ export function MobileTabbar() {
   return (
     <nav
       aria-label="Navegação rápida"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-popover/95 backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[9999] border-t border-border/80 bg-popover/95 backdrop-blur-xl lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
+        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
+      }}
     >
       <ul className="flex items-stretch">
         {tabs.map((tab) => (
@@ -28,7 +45,7 @@ export function MobileTabbar() {
             <a
               href={tab.href}
               aria-current={tab.active ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 py-2.5 text-[0.68rem] font-semibold transition-colors ${
+              className={`flex flex-col items-center gap-1 py-2 text-[0.68rem] font-semibold transition-colors ${
                 tab.active ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
