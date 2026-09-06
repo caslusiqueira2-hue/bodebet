@@ -78,7 +78,7 @@ export function GameCard({ game }: { game: Game }) {
           </span>
         ) : null}
 
-        <div className="absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none">
           <span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Play className="size-5 fill-current" />
           </span>

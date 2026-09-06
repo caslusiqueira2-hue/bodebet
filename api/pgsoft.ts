@@ -42,8 +42,20 @@ export default async function handler(req: any, res: any) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (contentType) {
       res.setHeader('Content-Type', contentType);
-      if (contentType.includes('text/html') || req.url.includes('/web-api/') || req.url.includes('/game-api/')) {
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      const url = req.url || '';
+      const isDynamic = 
+        contentType.includes('text/html') || 
+        url.includes('/web-api/') || 
+        url.includes('/game-api/') || 
+        url.includes('/socket.io/') ||
+        url.includes('/api/v1/') ||
+        url.includes('/gold_api/');
+
+      if (isDynamic) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      } else {
+        // CDN Edge Cache de alta performance para assets estáticos dos jogos PG (.js, .json, .png, .mp3, .atlas, .woff2)
+        res.setHeader('Cache-Control', 'public, max-age=604800, s-maxage=2592000, stale-while-revalidate=86400, immutable');
       }
     }
     return res.status(response.status).send(buffer);

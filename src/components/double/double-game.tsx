@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useProfile } from '@/hooks/use-profile';
 import { type DoubleColor, DOUBLE_MULTIPLIERS, generateStrip, drawDouble } from '@/lib/double-engine';
@@ -19,13 +19,19 @@ export function DoubleGame() {
   const [mode, setMode] = useState<'normal' | 'auto'>('normal');
 
   const controls = useAnimation();
+  const rouletteContainerRef = useRef<HTMLDivElement>(null);
   const TILE_WIDTH = 80;
   const GAP = 8;
+  const TILE_PITCH = TILE_WIDTH + GAP; // 88px
   const TARGET_INDEX = 70;
+  const STRIP_LENGTH = 100;
 
-  // Inicializa uma fita aleatória no começo
+  // Inicializa uma fita e posiciona centralizada no marcador
   useEffect(() => {
-    setStrip(generateStrip('red', 100, TARGET_INDEX));
+    setStrip(generateStrip('red', STRIP_LENGTH, TARGET_INDEX));
+    const containerWidth = rouletteContainerRef.current?.offsetWidth || 800;
+    const initialX = (containerWidth / 2) - (10 * TILE_PITCH + TILE_WIDTH / 2);
+    controls.set({ x: initialX });
   }, []);
 
   const handleBet = async () => {
@@ -42,19 +48,26 @@ export function DoubleGame() {
     
     // Sortear o backend
     const winningColor = drawDouble();
-    const newStrip = generateStrip(winningColor, 100, TARGET_INDEX);
+    const newStrip = generateStrip(winningColor, STRIP_LENGTH, TARGET_INDEX);
     setStrip(newStrip);
 
-    // Reseta a fita para x: 0
-    await controls.set({ x: 0 });
+    const containerWidth = rouletteContainerRef.current?.offsetWidth || 800;
+    
+    // Reseta suavemente para o ladrilho 10 antes de iniciar o giro
+    const startX = (containerWidth / 2) - (10 * TILE_PITCH + TILE_WIDTH / 2);
+    await controls.set({ x: startX });
 
-    // Calcula a posição para parar (o centro do TARGET_INDEX deve ficar no centro da tela)
-    const stopPosition = (TARGET_INDEX * (TILE_WIDTH + GAP)) - (3 * (TILE_WIDTH + GAP));
-    const randomOffset = Math.random() * 40 - 20; 
+    // Calcula a posição matemática exata para o TARGET_INDEX (70) parar no centro do contêiner
+    // O ponteiro está em containerWidth / 2.
+    // O centro do ladrilho TARGET_INDEX fica em TARGET_INDEX * TILE_PITCH + TILE_WIDTH / 2.
+    // Jitter seguro de +-15px (ladrilho tem 80px, logo permanece 100% dentro da cor sorteada)
+    const tileCenter = TARGET_INDEX * TILE_PITCH + TILE_WIDTH / 2;
+    const jitter = (Math.random() - 0.5) * 30; // [-15px, +15px]
+    const targetX = (containerWidth / 2) - tileCenter + jitter;
 
     await controls.start({
-      x: -(stopPosition + randomOffset),
-      transition: { duration: 5.5, ease: [0.15, 0.85, 0.25, 1] }
+      x: targetX,
+      transition: { duration: 5.5, ease: [0.12, 0.8, 0.2, 1] }
     });
 
     setGameState('resolved');
@@ -244,13 +257,16 @@ export function DoubleGame() {
             {getStatusText()}
           </h2>
 
-          <div className="relative w-full max-w-[800px] h-[100px] flex items-center overflow-hidden rounded-2xl border-y-2 border-white/15 bg-black/60 shadow-inner">
+          <div 
+            ref={rouletteContainerRef}
+            className="relative w-full max-w-[800px] h-[100px] flex items-center overflow-hidden rounded-2xl border-y-2 border-white/15 bg-black/60 shadow-inner"
+          >
             {/* Linha Central (Marcador) */}
             <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-white z-10 -translate-x-1/2 shadow-[0_0_10px_white]" />
             <div className="absolute left-1/2 top-0 bottom-0 w-[4px] bg-red-500 z-20 -translate-x-1/2" />
 
             <motion.div 
-              className="flex gap-[8px] px-[50vw] md:px-[400px]"
+              className="flex gap-[8px]"
               animate={controls}
             >
               {strip.map((color, i) => (
