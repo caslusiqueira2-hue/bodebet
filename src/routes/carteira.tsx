@@ -348,28 +348,37 @@ function CarteiraPage() {
 
                     <div className="flex items-center justify-between sm:justify-end gap-4">
                       {/* Status Badge Visível */}
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
-                          isPaid
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                      {isWithdrawal && isPending ? (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-xs font-bold text-emerald-400">pix processado.</span>
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-400">
+                            pendente
+                          </span>
+                        </div>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                            isPaid
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                              : isPending
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                              : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                          }`}
+                        >
+                          {isPaid ? (
+                            <CheckCircle2 className="size-3.5" />
+                          ) : isPending ? (
+                            <Clock className="size-3.5" />
+                          ) : (
+                            <AlertCircle className="size-3.5" />
+                          )}
+                          {isPaid
+                            ? 'Aprovado'
                             : isPending
-                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                            : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                        }`}
-                      >
-                        {isPaid ? (
-                          <CheckCircle2 className="size-3.5" />
-                        ) : isPending ? (
-                          <Clock className="size-3.5" />
-                        ) : (
-                          <AlertCircle className="size-3.5" />
-                        )}
-                        {isPaid
-                          ? 'Aprovado'
-                          : isPending
-                          ? 'Processando'
-                          : 'Cancelado'}
-                      </span>
+                            ? 'Processando'
+                            : 'Cancelado'}
+                        </span>
+                      )}
 
                       <span
                         className={`text-base font-black tabular-nums ${

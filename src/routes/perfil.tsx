@@ -864,12 +864,19 @@ function ProfilePage() {
                                 Concluído
                               </span>
                             )}
-                            {isPending && (
+                            {isPending && isWithdrawal ? (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="text-xs font-bold text-emerald-400">pix processado.</span>
+                                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-400">
+                                  pendente
+                                </span>
+                              </div>
+                            ) : isPending ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[0.68rem] font-bold text-amber-400">
-                                <Clock className="size-3 animate-spin" />
-                                {isWithdrawal ? 'Em Processamento' : 'Aguardando Pagamento'}
+                                <Clock className="size-3" />
+                                Aguardando Pagamento
                               </span>
-                            )}
+                            ) : null}
                             {!isPaid && !isPending && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 border border-red-500/30 px-2 py-0.5 text-[0.68rem] font-bold text-red-400">
                                 <AlertCircle className="size-3" />

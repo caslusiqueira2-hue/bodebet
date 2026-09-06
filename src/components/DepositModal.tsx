@@ -615,9 +615,11 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                   </motion.div>
                 )}
                 {success && (
-                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-                    <p>{success}</p>
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex flex-col items-start gap-1">
+                    <p className="text-emerald-400 font-bold text-sm">pix processado.</p>
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-400">
+                      pendente
+                    </span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -678,9 +680,12 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                       <div key={w.id} className="bg-background/70 border border-white/10 rounded-xl p-3 flex justify-between items-center">
                         <div>
                           <p className="text-white text-sm font-bold">Saque: R$ {Number(w.amount).toFixed(2)}</p>
-                          <p className="text-amber-400 text-xs flex items-center gap-1 mt-0.5">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Em processamento via Pix
-                          </p>
+                          <p className="text-emerald-400 text-xs font-bold mt-1">pix processado.</p>
+                          <div className="mt-0.5">
+                            <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-400">
+                              pendente
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
