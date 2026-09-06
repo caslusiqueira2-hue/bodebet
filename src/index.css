@@ -205,7 +205,48 @@
   .cell-win,
   .payout-pop,
   .tile-reveal,
-  .tile-boom {
+  .tile-boom,
+  .btn-pix-neon {
     animation: none;
   }
 }
+
+/* Neon Glowing Pix Pulse Animation */
+@keyframes neonPixPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 231, 1, 0.7), 0 0 40px rgba(0, 231, 1, 0.35);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(0, 231, 1, 0.95), 0 0 60px rgba(0, 231, 1, 0.55);
+    transform: scale(1.015);
+  }
+}
+
+.btn-pix-neon {
+  background-color: #00e701 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 22px rgba(0, 231, 1, 0.75), 0 0 45px rgba(0, 231, 1, 0.35) !important;
+  animation: neonPixPulse 2s infinite ease-in-out;
+}
+
+.btn-pix-neon:hover {
+  background-color: #00ff01 !important;
+  box-shadow: 0 0 30px rgba(0, 255, 1, 0.9), 0 0 60px rgba(0, 255, 1, 0.5) !important;
+}
+
+.btn-pix-neon:active {
+  transform: scale(0.97) !important;
+}
+
+/* Force hide mobile tabbar when any modal or deposit is open */
+body.modal-open nav[aria-label="Navegação rápida"],
+body[data-deposit-open="true"] nav[aria-label="Navegação rápida"],
+body:has(.deposit-modal-overlay) nav[aria-label="Navegação rápida"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(200%) !important;
+}
+

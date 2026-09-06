@@ -7,17 +7,35 @@ interface MobileTabbarProps {
 
 export function MobileTabbar({ isHidden }: MobileTabbarProps = {}) {
   const [currentPath, setCurrentPath] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentPath(window.location.pathname)
       const handleLocation = () => setCurrentPath(window.location.pathname)
       window.addEventListener('popstate', handleLocation)
-      return () => window.removeEventListener('popstate', handleLocation)
+
+      const checkModals = () => {
+        const hasModal = 
+          document.body.classList.contains('modal-open') ||
+          document.body.getAttribute('data-deposit-open') === 'true' ||
+          !!document.querySelector('.deposit-modal-overlay') ||
+          document.body.style.overflow === 'hidden'
+        setIsModalOpen(hasModal)
+      }
+
+      checkModals()
+      const observer = new MutationObserver(checkModals)
+      observer.observe(document.body, { attributes: true, childList: true, subtree: true })
+
+      return () => {
+        window.removeEventListener('popstate', handleLocation)
+        observer.disconnect()
+      }
     }
   }, [])
 
-  if (isHidden) {
+  if (isHidden || isModalOpen) {
     return null
   }
 

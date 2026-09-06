@@ -70,6 +70,24 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
     }
   }, [isOpen, initialTab, profile]);
 
+  // Bloquear scroll do fundo e garantir ocultação da barra inferior
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+      document.body.setAttribute('data-deposit-open', 'true');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.classList.remove('modal-open');
+      document.body.removeAttribute('data-deposit-open');
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.removeAttribute('data-deposit-open');
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   // Escutar a transação em tempo real para Depósito
   useEffect(() => {
     if (activeTab === 'deposit' && step === 2 && pixData?.transaction?.id) {
@@ -253,17 +271,18 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
   const calculatedCredit = depositAmount * promoMultiplier;
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div className="deposit-modal-overlay fixed inset-0 z-[1000000] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md overflow-hidden">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-[#120a1f] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[88dvh] sm:max-h-[85vh] my-auto relative"
+        exit={{ opacity: 0, scale: 0.96, y: 15 }}
+        className="bg-[#120a1f] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] relative my-auto"
       >
-        <div className="flex border-b border-white/10 bg-background/80 rounded-t-xl overflow-hidden relative">
+        {/* TAB HEADER */}
+        <div className="shrink-0 flex border-b border-white/10 bg-background/80 rounded-t-xl overflow-hidden relative">
           <button
             onClick={() => { setActiveTab('deposit'); setError(null); setSuccess(null); setStep(1); }}
-            className={`flex-1 py-4 text-sm font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3.5 sm:py-4 text-sm font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
               activeTab === 'deposit'
                 ? 'bg-primary text-white border-b-2 border-primary shadow'
                 : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white'
@@ -273,7 +292,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
           </button>
           <button
             onClick={() => { setActiveTab('withdraw'); setError(null); setSuccess(null); }}
-            className={`flex-1 py-4 text-sm font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3.5 sm:py-4 text-sm font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
               activeTab === 'withdraw'
                 ? 'bg-primary text-white border-b-2 border-primary shadow'
                 : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white'
@@ -283,46 +302,48 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
           </button>
           <button 
             onClick={resetAndClose} 
-            className="absolute right-3 top-3 bg-white/10 p-2 rounded-full text-muted-foreground hover:text-white hover:bg-white/20 transition-colors z-10"
+            className="absolute right-3 top-2.5 sm:top-3 bg-white/10 p-2 rounded-full text-muted-foreground hover:text-white hover:bg-white/20 transition-colors z-10"
             aria-label="Fechar modal"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 pb-12">
-          
-          <div className="mb-6 flex justify-between items-center bg-background/80 border border-white/10 rounded-xl p-4 shadow-sm">
-            <span className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Saldo em Conta</span>
-            <span className="text-xl font-black text-emerald-400 tabular-nums">R$ {(profile?.balance || 0).toFixed(2)}</span>
-          </div>
+        {/* TAB: DEPOSIT */}
+        {activeTab === 'deposit' && (
+          <>
+            {step === 1 && (
+              <form onSubmit={handleDeposit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-3.5">
+                  {/* Saldo em Conta */}
+                  <div className="flex justify-between items-center bg-background/80 border border-white/10 rounded-xl p-3 shadow-sm">
+                    <span className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Saldo em Conta</span>
+                    <span className="text-lg sm:text-xl font-black text-emerald-400 tabular-nums">R$ {(profile?.balance || 0).toFixed(2)}</span>
+                  </div>
 
-          <AnimatePresence mode="wait">
-            {error && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-4 p-3.5 rounded-xl bg-destructive/15 border border-destructive/30 text-red-400 text-sm flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <p className="font-medium">{error}</p>
-              </motion.div>
-            )}
-            {success && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-4 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-                <p className="font-medium">{success}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {/* Alertas */}
+                  <AnimatePresence mode="wait">
+                    {error && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 rounded-xl bg-destructive/15 border border-destructive/30 text-red-400 text-xs font-semibold flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                        <p>{error}</p>
+                      </motion.div>
+                    )}
+                    {success && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                        <p>{success}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-          {activeTab === 'deposit' && (
-            <>
-              {step === 1 && (
-                <motion.form initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleDeposit} className="flex flex-col gap-4">
                   {/* VALOR DO DEPÓSITO */}
                   <div>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-1.5">
                       <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Valor do Depósito (R$)</label>
                       {appliedPromo && (
                         <span className="text-xs font-black text-emerald-400 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                           Receberá: R$ {calculatedCredit.toFixed(2)}
                         </span>
                       )}
@@ -334,7 +355,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                           key={val} 
                           type="button" 
                           onClick={() => setDepositAmount(val)}
-                          className={`py-2.5 rounded-xl text-sm font-bold border transition-all ${
+                          className={`py-2 sm:py-2.5 rounded-xl text-sm font-bold border transition-all ${
                             depositAmount === val 
                               ? 'bg-primary border-primary text-white shadow-md shadow-primary/30 scale-[1.02]' 
                               : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
@@ -348,15 +369,15 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                       type="number" 
                       value={depositAmount} 
                       onChange={(e) => setDepositAmount(Number(e.target.value))}
-                      className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white font-bold focus:border-primary focus:outline-none"
-                      min="1" 
+                      className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white font-bold focus:border-emerald-400 focus:outline-none text-sm"
+                      min="2" 
                       step="0.01" 
                       required
                     />
                   </div>
 
-                  {/* CAMPO DE CÓDIGO PROMOCIONAL */}
-                  <div className="bg-background/90 border border-white/10 rounded-xl p-3 flex flex-col gap-2.5">
+                  {/* CÓDIGO PROMOCIONAL */}
+                  <div className="bg-background/90 border border-white/10 rounded-xl p-3 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                         <Tag className="w-3.5 h-3.5 text-primary" />
@@ -370,7 +391,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     </div>
 
                     {appliedPromo ? (
-                      <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
+                      <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5">
                         <div className="flex flex-col">
                           <span className="text-xs font-black text-emerald-400 flex items-center gap-1">
                             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
@@ -415,76 +436,87 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     )}
                   </div>
 
+                  {/* NOME COMPLETO */}
                   <div>
-                    <label className="text-xs text-muted-foreground font-bold uppercase mb-1.5 block tracking-wider">Nome Completo</label>
+                    <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">Nome Completo</label>
                     <input 
                       type="text" 
                       value={client.name} 
                       onChange={(e) => setClient({ ...client, name: e.target.value })} 
-                      className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white focus:border-primary focus:outline-none text-sm" 
+                      className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
                       placeholder="Seu nome" 
                       required 
                     />
                   </div>
 
+                  {/* E-MAIL */}
                   <div>
-                    <label className="text-xs text-muted-foreground font-bold uppercase mb-1.5 block tracking-wider">E-mail</label>
+                    <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">E-mail</label>
                     <input 
                       type="email" 
                       value={client.email} 
                       onChange={(e) => setClient({ ...client, email: e.target.value })} 
-                      className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white focus:border-primary focus:outline-none text-sm" 
+                      className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
                       placeholder="seu@email.com" 
                       required 
                     />
                   </div>
 
+                  {/* CPF E TELEFONE */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-muted-foreground font-bold uppercase mb-1.5 block tracking-wider">CPF</label>
+                      <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">CPF</label>
                       <input 
                         type="text" 
                         value={client.document} 
                         onChange={(e) => setClient({ ...client, document: e.target.value })} 
-                        className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white focus:border-primary focus:outline-none text-sm" 
+                        className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
                         placeholder="000.000.000-00" 
                         required 
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground font-bold uppercase mb-1.5 block tracking-wider">Telefone</label>
+                      <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block tracking-wider">Telefone</label>
                       <input 
                         type="text" 
                         value={client.phone} 
                         onChange={(e) => setClient({ ...client, phone: e.target.value })} 
-                        className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white focus:border-primary focus:outline-none text-sm" 
+                        className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-emerald-400 focus:outline-none text-sm" 
                         placeholder="(11) 99999-9999" 
                         required 
                       />
                     </div>
                   </div>
+                </div>
 
+                {/* STICKY FOOTER CTA - BOTÃO VERDE NEON PULSANTE E BRILHANTE */}
+                <div className="p-3 sm:p-4 bg-[#120a1f] border-t border-white/10 shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.7)]">
                   <button 
                     type="submit" 
                     disabled={isLoading} 
-                    className="w-full bg-[#f5b625] hover:bg-[#eab308] text-black font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-4 transition-transform active:scale-95 flex justify-center items-center gap-2 shadow-xl shadow-[#f5b625]/30 border-none cursor-pointer select-none"
+                    className="w-full btn-pix-neon py-3.5 sm:py-4 rounded-xl font-black text-base uppercase tracking-wider transition-all flex justify-center items-center gap-2 border-none cursor-pointer select-none active:scale-[0.98]"
                   >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-black" /> : (
-                      <span className="text-black font-black">
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-black" />
+                    ) : (
+                      <span className="flex items-center justify-center gap-2 text-black font-black text-base sm:text-lg">
+                        <Sparkles className="w-5 h-5 fill-black text-black shrink-0" />
                         GERAR PIX R$ {depositAmount.toFixed(2)}
                         {appliedPromo ? ` (RECEBA R$ ${calculatedCredit.toFixed(2)})` : ''}
                       </span>
                     )}
                   </button>
-                </motion.form>
-              )}
+                </div>
+              </form>
+            )}
 
-              {step === 2 && pixData && (
-                <div className="flex flex-col items-center text-center gap-5">
+            {step === 2 && pixData && (
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 flex flex-col items-center text-center gap-4">
                   <div>
                     <h3 className="text-white font-black text-xl mb-1">Pague via Pix</h3>
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /> Aguardando confirmação do pagamento...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" /> Aguardando confirmação do pagamento...
                     </p>
                     {appliedPromo && (
                       <span className="inline-block mt-2 text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-full">
@@ -492,16 +524,17 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                       </span>
                     )}
                   </div>
+
                   {pixData.pix.image || pixData.pix.code ? (
-                    <div className="bg-white p-3 rounded-2xl shadow-lg">
+                    <div className="bg-white p-3 rounded-2xl shadow-lg shrink-0">
                       <img 
                         src={pixData.pix.image || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixData.pix.code)}`} 
                         alt="QR Code Pix" 
-                        className="w-48 h-48" 
+                        className="w-44 h-44 sm:w-48 sm:h-48" 
                       />
                     </div>
                   ) : (
-                    <div className="w-48 h-48 bg-background border border-white/10 rounded-xl flex items-center justify-center text-muted-foreground text-xs p-4">
+                    <div className="w-44 h-44 sm:w-48 sm:h-48 bg-background border border-white/10 rounded-xl flex items-center justify-center text-muted-foreground text-xs p-4">
                       QR Code indisponível
                     </div>
                   )}
@@ -516,55 +549,79 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                         className="flex-1 bg-background/90 border border-white/15 rounded-xl p-3 text-white text-xs font-mono select-all" 
                       />
                       <button 
+                        type="button"
                         onClick={copyToClipboard} 
-                        className="bg-primary hover:bg-primary/90 text-white px-4 rounded-xl transition-colors flex items-center justify-center font-bold"
+                        className="bg-[#00e701] hover:bg-[#00c801] text-black px-4 rounded-xl transition-colors flex items-center justify-center font-bold cursor-pointer"
                         title="Copiar código"
                       >
-                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                        {copied ? <Check className="w-5 h-5 text-black" /> : <Copy className="w-5 h-5 text-black" />}
                       </button>
                     </div>
                   </div>
-
-                  <div className="w-full mt-2">
-                    <button 
-                      onClick={simulatePaymentReceived} 
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
-                    >
-                      Já realizei o pagamento Pix
-                    </button>
-                  </div>
                 </div>
-              )}
 
-              {step === 3 && (
-                <div className="flex flex-col items-center text-center gap-4 py-6">
-                  <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center mb-2">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-                  </div>
-                  <h3 className="text-white font-black text-2xl">Depósito Confirmado!</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {appliedPromo 
-                      ? `Parabéns! O bônus de dobro foi creditado: R$ ${calculatedCredit.toFixed(2)} já estão na sua conta.`
-                      : `O valor de R$ ${depositAmount.toFixed(2)} já foi adicionado ao seu saldo com sucesso.`}
-                  </p>
+                <div className="p-3 sm:p-4 bg-[#120a1f] border-t border-white/10 shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.7)]">
                   <button 
-                    onClick={resetAndClose} 
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-xl mt-4 transition-colors"
+                    type="button"
+                    onClick={simulatePaymentReceived} 
+                    className="w-full bg-[#00e701] hover:bg-[#00c801] text-black text-sm sm:text-base font-black uppercase tracking-wider py-3.5 sm:py-4 rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
-                    CONTINUAR JOGANDO
+                    <CheckCircle2 className="w-5 h-5 text-black shrink-0" />
+                    Já realizei o pagamento Pix
                   </button>
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
 
-          {activeTab === 'withdraw' && (
-            <motion.form 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }}
-              onSubmit={handleWithdraw} 
-              className="flex flex-col gap-4"
-            >
+            {step === 3 && (
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden justify-center items-center p-6 text-center gap-4">
+                <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center mb-2 animate-bounce">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+                </div>
+                <h3 className="text-white font-black text-2xl">Depósito Confirmado!</h3>
+                <p className="text-muted-foreground text-sm max-w-xs">
+                  {appliedPromo 
+                    ? `Parabéns! O bônus de dobro foi creditado: R$ ${calculatedCredit.toFixed(2)} já estão na sua conta.`
+                    : `O valor de R$ ${depositAmount.toFixed(2)} já foi adicionado ao seu saldo com sucesso.`}
+                </p>
+                <button 
+                  type="button"
+                  onClick={resetAndClose} 
+                  className="w-full btn-pix-neon py-3.5 sm:py-4 rounded-xl font-black text-base uppercase tracking-wider mt-4 transition-transform active:scale-95 text-black"
+                >
+                  CONTINUAR JOGANDO
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* TAB: WITHDRAW */}
+        {activeTab === 'withdraw' && (
+          <form onSubmit={handleWithdraw} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-4">
+              {/* Saldo em Conta */}
+              <div className="flex justify-between items-center bg-background/80 border border-white/10 rounded-xl p-3 shadow-sm">
+                <span className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Saldo em Conta</span>
+                <span className="text-lg sm:text-xl font-black text-emerald-400 tabular-nums">R$ {(profile?.balance || 0).toFixed(2)}</span>
+              </div>
+
+              {/* Alertas */}
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 rounded-xl bg-destructive/15 border border-destructive/30 text-red-400 text-xs font-semibold flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <p>{error}</p>
+                  </motion.div>
+                )}
+                {success && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                    <p>{success}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div>
                 <label className="text-xs text-muted-foreground font-bold uppercase mb-2 block tracking-wider">Valor do Saque (R$)</label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
@@ -591,7 +648,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                   type="number" 
                   value={withdrawAmount} 
                   onChange={(e) => setWithdrawAmount(Number(e.target.value))}
-                  className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white font-bold focus:border-primary focus:outline-none"
+                  className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white font-bold focus:border-primary focus:outline-none text-sm"
                   min="50" 
                   step="0.01" 
                   max={profile?.balance || 0} 
@@ -605,23 +662,15 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                   type="text" 
                   value={pixKey} 
                   onChange={(e) => setPixKey(e.target.value)}
-                  className="w-full bg-background/90 border border-white/15 rounded-xl p-3 text-white focus:border-primary focus:outline-none text-sm"
+                  className="w-full bg-background/90 border border-white/15 rounded-xl p-2.5 sm:p-3 text-white focus:border-primary focus:outline-none text-sm"
                   placeholder="CPF, E-mail, Celular ou Chave Aleatória" 
                   required
                 />
               </div>
 
-              <button
-                type="submit" 
-                disabled={isLoading || (profile?.balance || 0) < withdrawAmount}
-                className="w-full bg-[#f5b625] hover:bg-[#eab308] text-black font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-3 transition-transform active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none shadow-xl shadow-[#f5b625]/25 border-none cursor-pointer select-none"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-black" /> : 'SOLICITAR SAQUE PIX'}
-              </button>
-
               {pendingWithdrawals.length > 0 && (
-                <div className="mt-4 border-t border-white/10 pt-4">
-                  <h4 className="text-white text-xs font-bold uppercase mb-3 flex items-center gap-2">
+                <div className="border-t border-white/10 pt-3">
+                  <h4 className="text-white text-xs font-bold uppercase mb-2.5 flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5 text-primary" /> Meus Saques Recentes
                   </h4>
                   <div className="flex flex-col gap-2">
@@ -638,10 +687,19 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                   </div>
                 </div>
               )}
-            </motion.form>
-          )}
+            </div>
 
-        </div>
+            <div className="p-3 sm:p-4 bg-[#120a1f] border-t border-white/10 shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.7)]">
+              <button
+                type="submit" 
+                disabled={isLoading || (profile?.balance || 0) < withdrawAmount}
+                className="w-full bg-[#f5b625] hover:bg-[#eab308] text-black font-black text-sm sm:text-base uppercase tracking-wider py-3.5 sm:py-4 rounded-xl transition-transform active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none shadow-xl shadow-[#f5b625]/25 border-none cursor-pointer select-none"
+              >
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-black" /> : 'SOLICITAR SAQUE PIX'}
+              </button>
+            </div>
+          </form>
+        )}
       </motion.div>
     </div>
   );

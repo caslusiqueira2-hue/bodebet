@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
-import { DepositModal } from '@/components/DepositModal'
 import { useProfile } from '@/hooks/use-profile'
 import { supabase } from '@/lib/supabase'
 import { formatBRL } from '@/lib/casino-data'
@@ -36,10 +35,6 @@ function CarteiraPage() {
   const [transactions, setTransactions] = useState<TransactionItem[]>([])
   const [loadingTx, setLoadingTx] = useState(true)
   const [filter, setFilter] = useState<'all' | 'deposits' | 'withdrawals'>('all')
-  
-  // Deposit / Withdraw Modal state
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit')
 
   const fetchTransactions = async (userId: string) => {
     try {
@@ -83,13 +78,11 @@ function CarteiraPage() {
   }, [profile?.id])
 
   const openDeposit = () => {
-    setModalTab('deposit')
-    setModalOpen(true)
+    document.dispatchEvent(new CustomEvent('open-deposit-modal', { detail: { tab: 'deposit' } }))
   }
 
   const openWithdraw = () => {
-    setModalTab('withdraw')
-    setModalOpen(true)
+    document.dispatchEvent(new CustomEvent('open-deposit-modal', { detail: { tab: 'withdraw' } }))
   }
 
   // Filtragem das transações
@@ -393,19 +386,6 @@ function CarteiraPage() {
           )}
         </div>
       </main>
-
-      {/* Modal de Depósito / Saque */}
-      {profile && (
-        <DepositModal
-          isOpen={modalOpen}
-          onClose={() => {
-            setModalOpen(false)
-            if (profile?.id) fetchTransactions(profile.id)
-          }}
-          userId={profile.id}
-          initialTab={modalTab}
-        />
-      )}
 
       <SiteFooter />
     </div>

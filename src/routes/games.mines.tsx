@@ -7,7 +7,6 @@ import { BalanceDisplay } from '@/components/BalanceDisplay';
 import { MultiplierDisplay } from '@/components/MultiplierDisplay';
 import { GameResultOverlay } from '@/components/GameResultOverlay';
 import { StatsHistoryPanel } from '@/components/StatsHistoryPanel';
-import { DepositModal } from '@/components/DepositModal';
 import { Bomb, LogOut, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Link } from '@tanstack/react-router';
@@ -32,26 +31,29 @@ function MinesGameRoute() {
 
 function Game({ userId }: { userId: string }) {
   const game = useMinesGame(userId);
-  const [isDepositOpen, setIsDepositOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
-      
-      {/* Header (Preservado do antigo App.tsx) */}
-      <header className="bg-surface border-b border-white/5 py-4 px-6 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="text-textMuted hover:text-white transition-colors">
-            <ArrowLeft className="w-6 h-6" />
+    <div className="min-h-screen bg-[#0f081d] text-white flex flex-col font-sans select-none pb-20">
+      {/* Game Header */}
+      <header className="border-b border-border/40 bg-surface/50 backdrop-blur px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <Link 
+            to="/" 
+            className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Link>
-          <div className="flex items-center gap-2">
-            <Bomb className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-black text-white tracking-widest italic hidden sm:block">MINES</h1>
-            {game.role === 'admin' && (
-              <span className="ml-2 bg-primary/20 text-primary border border-primary/50 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:block">
+          <div className="p-2 bg-accent/20 rounded-xl text-accent border border-accent/30">
+            <Bomb className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="font-black tracking-wider text-base md:text-lg uppercase">Mines</h1>
+            {game.isAdmin && (
+              <span className="text-[10px] bg-danger/20 text-danger px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                 Admin
               </span>
             )}
@@ -61,7 +63,7 @@ function Game({ userId }: { userId: string }) {
         <div className="flex items-center gap-4">
           <BalanceDisplay 
             balance={game.balance} 
-            onDepositClick={() => setIsDepositOpen(true)}
+            onDepositClick={() => document.dispatchEvent(new CustomEvent('open-deposit-modal'))}
           />
           <button 
             onClick={handleLogout}
@@ -72,12 +74,6 @@ function Game({ userId }: { userId: string }) {
           </button>
         </div>
       </header>
-
-      <DepositModal 
-        isOpen={isDepositOpen} 
-        onClose={() => setIsDepositOpen(false)}
-        userId={userId}
-      />
 
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 flex flex-col xl:flex-row gap-8 items-start justify-center max-w-[1400px] mx-auto w-full">
