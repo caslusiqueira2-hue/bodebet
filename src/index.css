@@ -21,6 +21,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-safe: var(--safe);
+  --color-safe-foreground: var(--safe-foreground);
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Montserrat Alternates', ui-sans-serif, system-ui, sans-serif;
@@ -47,6 +49,9 @@
 
   --primary: #f5b625;
   --primary-foreground: #1a0f05;
+
+  --safe: #f5b625;
+  --safe-foreground: #000000;
 
   --secondary: #2a1546;
   --secondary-foreground: #f7f1ff;

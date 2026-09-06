@@ -59,8 +59,16 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
       setActiveTab(initialTab || 'deposit');
       setError(null);
       setSuccess(null);
+      if (profile) {
+        setClient(prev => ({
+          name: prev.name || profile.full_name || '',
+          email: prev.email || profile.email || '',
+          document: prev.document || profile.cpf || '',
+          phone: prev.phone || profile.phone || ''
+        }));
+      }
     }
-  }, [isOpen, initialTab]);
+  }, [isOpen, initialTab, profile]);
 
   // Escutar a transação em tempo real para Depósito
   useEffect(() => {
@@ -245,12 +253,12 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
   const calculatedCredit = depositAmount * promoMultiplier;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-[#120a1f] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="bg-[#120a1f] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[88dvh] sm:max-h-[85vh] my-auto relative"
       >
         <div className="flex border-b border-white/10 bg-background/80 rounded-t-xl overflow-hidden relative">
           <button
@@ -282,7 +290,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar">
+        <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 pb-12">
           
           <div className="mb-6 flex justify-between items-center bg-background/80 border border-white/10 rounded-xl p-4 shadow-sm">
             <span className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Saldo em Conta</span>
@@ -459,10 +467,10 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                   <button 
                     type="submit" 
                     disabled={isLoading} 
-                    className="w-full bg-safe hover:bg-yellow-400 text-black font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-2 transition-transform active:scale-95 flex justify-center items-center gap-2 shadow-lg shadow-safe/20"
+                    className="w-full bg-[#f5b625] hover:bg-[#eab308] text-black font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-4 transition-transform active:scale-95 flex justify-center items-center gap-2 shadow-xl shadow-[#f5b625]/30 border-none cursor-pointer select-none"
                   >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                      <span>
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-black" /> : (
+                      <span className="text-black font-black">
                         GERAR PIX R$ {depositAmount.toFixed(2)}
                         {appliedPromo ? ` (RECEBA R$ ${calculatedCredit.toFixed(2)})` : ''}
                       </span>
@@ -606,9 +614,9 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
               <button
                 type="submit" 
                 disabled={isLoading || (profile?.balance || 0) < withdrawAmount}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-2 transition-transform active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none shadow-lg shadow-primary/20"
+                className="w-full bg-[#f5b625] hover:bg-[#eab308] text-black font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-3 transition-transform active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none shadow-xl shadow-[#f5b625]/25 border-none cursor-pointer select-none"
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'SOLICITAR SAQUE PIX'}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-black" /> : 'SOLICITAR SAQUE PIX'}
               </button>
 
               {pendingWithdrawals.length > 0 && (

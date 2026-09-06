@@ -1,7 +1,11 @@
 import { Dices, Gift, Sparkles, User, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-export function MobileTabbar() {
+interface MobileTabbarProps {
+  isHidden?: boolean
+}
+
+export function MobileTabbar({ isHidden }: MobileTabbarProps = {}) {
   const [currentPath, setCurrentPath] = useState('')
 
   useEffect(() => {
@@ -12,6 +16,10 @@ export function MobileTabbar() {
       return () => window.removeEventListener('popstate', handleLocation)
     }
   }, [])
+
+  if (isHidden) {
+    return null
+  }
 
   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
     return null
@@ -28,13 +36,13 @@ export function MobileTabbar() {
   return (
     <nav
       aria-label="Navegação rápida"
-      className="fixed inset-x-0 bottom-0 z-[9999] border-t border-border/80 bg-popover/95 backdrop-blur-xl lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-popover/95 backdrop-blur-xl lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
       style={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 9999,
+        zIndex: 40,
         transform: 'translate3d(0, 0, 0)',
         WebkitTransform: 'translate3d(0, 0, 0)',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',

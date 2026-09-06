@@ -81,7 +81,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <MobileTabbar />
+      <MobileTabbar isHidden={isDepositOpen} />
       {session && (
         <>
           <DepositModal 

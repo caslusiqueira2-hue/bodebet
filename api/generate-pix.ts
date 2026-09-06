@@ -31,7 +31,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         identifier,
         amount,
-        client,
+        client: {
+          name: client?.name || 'Cliente BodeBet',
+          email: client?.email || 'cliente@bodebet.site',
+          phone: (client?.phone || '').replace(/\D/g, ''),
+          document: (client?.document || '').replace(/\D/g, '')
+        },
         metadata: {
           provider: "BodeBet",
           orderId: identifier
@@ -53,8 +58,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (!sigilopayRes.ok) {
-      const errorData = await sigilopayRes.json();
-      throw new Error(errorData.message || 'Erro ao gerar PIX na SigiloPay');
+      const errorData = await sigilopayRes.json().catch(() => ({}));
+      let msg = errorData.message || errorData.details?.error || 'Erro ao gerar PIX na SigiloPay';
+      if (errorData.details?.error?.includes('Produtor não está ativo') || errorData.message?.includes('not authorized to sell')) {
+        msg = 'Conta SigiloPay: "Produtor não está ativo". Por favor, acesse o painel da SigiloPay (app.sigilopay.com.br) e ative o cadastro do produtor para liberar os depósitos via Pix.';
+      }
+      throw new Error(msg);
     }
 
     const pixData = await sigilopayRes.json();
