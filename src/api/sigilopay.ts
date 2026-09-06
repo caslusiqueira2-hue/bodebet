@@ -2,6 +2,8 @@
 
 export interface PixRequest {
   amount: number;
+  creditAmount?: number;
+  promoCode?: string;
   client: {
     name: string;
     email: string;

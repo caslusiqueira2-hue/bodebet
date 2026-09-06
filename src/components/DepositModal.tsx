@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowDownToLine, Wallet, ArrowUpFromLine, Copy, CheckCircle2, AlertCircle, Loader2, Clock, Check } from 'lucide-react';
+import { 
+  X, 
+  ArrowDownToLine, 
+  Wallet, 
+  ArrowUpFromLine, 
+  Copy, 
+  CheckCircle2, 
+  AlertCircle, 
+  Loader2, 
+  Clock, 
+  Check,
+  Tag,
+  Sparkles
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../hooks/use-profile';
 import { generatePix } from '../api/sigilopay';
 import type { PixRequest, PixResponse } from '../api/sigilopay';
+import { validatePromoCode, recordPromoCodeUsage, type PromoCode } from '../lib/promo-codes';
 
 interface Props {
   isOpen: boolean;
@@ -23,6 +37,12 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
   const [client, setClient] = useState({ name: '', email: '', document: '', phone: '' });
   const [pixData, setPixData] = useState<PixResponse | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Promo Code States
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [promoMsg, setPromoMsg] = useState<{ text: string; isError: boolean } | null>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
 
   // Withdraw States
   const [withdrawAmount, setWithdrawAmount] = useState<number>(50);
@@ -78,6 +98,33 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
     }
   }, [activeTab, isOpen]);
 
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setValidatingPromo(true);
+    setPromoMsg(null);
+    
+    try {
+      const res = await validatePromoCode(promoInput);
+      if (res.valid && res.promo) {
+        setAppliedPromo(res.promo);
+        setPromoMsg({ text: res.message, isError: false });
+      } else {
+        setAppliedPromo(null);
+        setPromoMsg({ text: res.message, isError: true });
+      }
+    } catch (err: any) {
+      setPromoMsg({ text: 'Erro ao validar código.', isError: true });
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoInput('');
+    setPromoMsg(null);
+  };
+
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (depositAmount <= 0) {
@@ -93,11 +140,25 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
     setError(null);
     setSuccess(null);
     
+    const multiplier = appliedPromo?.multiplier || 1;
+    const finalCredit = depositAmount * multiplier;
+
     try {
-      const data: PixRequest = { amount: depositAmount, client, profileId: userId };
+      const data: PixRequest = { 
+        amount: depositAmount, 
+        creditAmount: finalCredit,
+        promoCode: appliedPromo?.code,
+        client, 
+        profileId: userId 
+      };
+      
       const response = await generatePix(data);
       setPixData(response);
       setStep(2);
+
+      if (appliedPromo) {
+        recordPromoCodeUsage(appliedPromo.code);
+      }
     } catch (err: any) {
       setError(err.message || "Erro desconhecido ao gerar o Pix.");
     } finally {
@@ -118,7 +179,9 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
        await supabase.from('transactions').update({ status: 'PAID' }).eq('id', pixData.transaction.id);
        const { data: p } = await supabase.from('profiles').select('balance').eq('id', userId).single();
        if (p) {
-         await persistBalance(Number(p.balance) + depositAmount);
+         const multiplier = appliedPromo?.multiplier || 1;
+         const finalCredit = depositAmount * multiplier;
+         await persistBalance(Number(p.balance) + finalCredit);
        }
        setStep(3);
     }
@@ -170,10 +233,16 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
     setSuccess(null);
     setStep(1);
     setPixData(null);
+    setAppliedPromo(null);
+    setPromoInput('');
+    setPromoMsg(null);
     onClose();
   };
 
   if (!isOpen) return null;
+
+  const promoMultiplier = appliedPromo?.multiplier || 1;
+  const calculatedCredit = depositAmount * promoMultiplier;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
@@ -239,10 +308,20 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
             <>
               {step === 1 && (
                 <motion.form initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleDeposit} className="flex flex-col gap-4">
+                  {/* VALOR DO DEPÓSITO */}
                   <div>
-                    <label className="text-xs text-muted-foreground font-bold uppercase mb-2 block tracking-wider">Valor do Depósito (R$)</label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Valor do Depósito (R$)</label>
+                      {appliedPromo && (
+                        <span className="text-xs font-black text-emerald-400 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          Receberá: R$ {calculatedCredit.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+
                     <div className="grid grid-cols-3 gap-2 mb-2">
-                      {[20, 50, 100].map(val => (
+                      {[10, 20, 50].map(val => (
                         <button
                           key={val} 
                           type="button" 
@@ -266,6 +345,66 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                       step="0.01" 
                       required
                     />
+                  </div>
+
+                  {/* CAMPO DE CÓDIGO PROMOCIONAL */}
+                  <div className="bg-background/90 border border-white/10 rounded-xl p-3 flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5 text-primary" />
+                        Código Promocional
+                      </label>
+                      {appliedPromo && (
+                        <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded">
+                          {appliedPromo.multiplier}x Dobra Saldo
+                        </span>
+                      )}
+                    </div>
+
+                    {appliedPromo ? (
+                      <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-emerald-400 flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            Código {appliedPromo.code} Ativo!
+                          </span>
+                          <span className="text-xs text-white/90 font-semibold mt-0.5">
+                            Você deposita R$ {depositAmount.toFixed(2)} e recebe <strong className="text-emerald-400 font-black text-sm">R$ {calculatedCredit.toFixed(2)}</strong> na banca!
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemovePromo}
+                          className="text-xs text-red-400 hover:text-red-300 font-bold px-2.5 py-1 bg-red-500/10 rounded-lg border border-red-500/25 transition-colors"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoInput}
+                          onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                          placeholder="Digite seu cupom (ex: DOBRO)"
+                          className="flex-1 bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wider text-white placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyPromo}
+                          disabled={validatingPromo || !promoInput.trim()}
+                          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 shadow"
+                        >
+                          {validatingPromo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Aplicar'}
+                        </button>
+                      </div>
+                    )}
+
+                    {promoMsg && !appliedPromo && (
+                      <p className={`text-xs font-semibold ${promoMsg.isError ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {promoMsg.text}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -322,7 +461,12 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     disabled={isLoading} 
                     className="w-full bg-safe hover:bg-yellow-400 text-black font-black text-sm uppercase tracking-wider py-4 rounded-xl mt-2 transition-transform active:scale-95 flex justify-center items-center gap-2 shadow-lg shadow-safe/20"
                   >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'GERAR PIX DEPOSITAR'}
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                      <span>
+                        GERAR PIX R$ {depositAmount.toFixed(2)}
+                        {appliedPromo ? ` (RECEBA R$ ${calculatedCredit.toFixed(2)})` : ''}
+                      </span>
+                    )}
                   </button>
                 </motion.form>
               )}
@@ -334,6 +478,11 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /> Aguardando confirmação do pagamento...
                     </p>
+                    {appliedPromo && (
+                      <span className="inline-block mt-2 text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-full">
+                        ✨ Cupom {appliedPromo.code} ativo: Você receberá R$ {calculatedCredit.toFixed(2)}!
+                      </span>
+                    )}
                   </div>
                   {pixData.pix.image || pixData.pix.code ? (
                     <div className="bg-white p-3 rounded-2xl shadow-lg">
@@ -371,7 +520,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                   <div className="w-full mt-2">
                     <button 
                       onClick={simulatePaymentReceived} 
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-md"
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
                     >
                       Já realizei o pagamento Pix
                     </button>
@@ -385,7 +534,11 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
                     <CheckCircle2 className="w-10 h-10 text-emerald-400" />
                   </div>
                   <h3 className="text-white font-black text-2xl">Depósito Confirmado!</h3>
-                  <p className="text-muted-foreground text-sm">O valor já foi adicionado ao seu saldo com sucesso.</p>
+                  <p className="text-muted-foreground text-sm">
+                    {appliedPromo 
+                      ? `Parabéns! O bônus de dobro foi creditado: R$ ${calculatedCredit.toFixed(2)} já estão na sua conta.`
+                      : `O valor de R$ ${depositAmount.toFixed(2)} já foi adicionado ao seu saldo com sucesso.`}
+                  </p>
                   <button 
                     onClick={resetAndClose} 
                     className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-xl mt-4 transition-colors"

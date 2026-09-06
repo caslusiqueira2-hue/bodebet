@@ -7,7 +7,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { amount, client, profileId } = req.body;
+    const { amount, client, profileId, creditAmount, promoCode } = req.body;
 
     const PUBLIC_KEY = process.env.SIGILOPAY_PUBLIC_KEY || 'caslusiqueira2_tdrs2cumsynt4550';
     const SECRET_KEY = process.env.SIGILOPAY_SECRET_KEY || '1kehz0guqz082talkgiv0tt1wdq8ytqol5b62ulqd8oosg0l50xif37iqkdow10n';
@@ -49,11 +49,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const pixData = await sigilopayRes.json();
 
+    const finalCredit = creditAmount && Number(creditAmount) > 0 ? Number(creditAmount) : amount;
     const { data: dbData, error: dbError } = await supabase
       .from('transactions')
       .insert({
         profile_id: profileId,
-        amount: amount,
+        amount: finalCredit,
         status: 'PENDING',
         sigilopay_id: pixData.transactionId,
         pix_code: pixData.pix.code,
