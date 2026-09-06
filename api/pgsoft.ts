@@ -42,6 +42,9 @@ export default async function handler(req: any, res: any) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (contentType) {
       res.setHeader('Content-Type', contentType);
+      if (contentType.includes('text/html') || req.url.includes('/web-api/') || req.url.includes('/game-api/')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
     }
     return res.status(response.status).send(buffer);
   } catch (error: any) {
