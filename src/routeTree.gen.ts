@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AjudaRouteImport } from './routes/ajuda'
 import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as JogoResponsavelRouteImport } from './routes/jogo-responsavel'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as SuporteRouteImport } from './routes/suporte'
 import { Route as TermosRouteImport } from './routes/termos'
@@ -50,6 +51,11 @@ const CarteiraRoute = CarteiraRouteImport.update({
 const JogoResponsavelRoute = JogoResponsavelRouteImport.update({
   id: '/jogo-responsavel',
   path: '/jogo-responsavel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/ajuda': typeof AjudaRoute
   '/carteira': typeof CarteiraRoute
   '/jogo-responsavel': typeof JogoResponsavelRoute
+  '/perfil': typeof PerfilRoute
   '/privacidade': typeof PrivacidadeRoute
   '/suporte': typeof SuporteRoute
   '/termos': typeof TermosRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/ajuda': typeof AjudaRoute
   '/carteira': typeof CarteiraRoute
   '/jogo-responsavel': typeof JogoResponsavelRoute
+  '/perfil': typeof PerfilRoute
   '/privacidade': typeof PrivacidadeRoute
   '/suporte': typeof SuporteRoute
   '/termos': typeof TermosRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/ajuda': typeof AjudaRoute
   '/carteira': typeof CarteiraRoute
   '/jogo-responsavel': typeof JogoResponsavelRoute
+  '/perfil': typeof PerfilRoute
   '/privacidade': typeof PrivacidadeRoute
   '/suporte': typeof SuporteRoute
   '/termos': typeof TermosRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/ajuda'
     | '/carteira'
     | '/jogo-responsavel'
+    | '/perfil'
     | '/privacidade'
     | '/suporte'
     | '/termos'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/ajuda'
     | '/carteira'
     | '/jogo-responsavel'
+    | '/perfil'
     | '/privacidade'
     | '/suporte'
     | '/termos'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/ajuda'
     | '/carteira'
     | '/jogo-responsavel'
+    | '/perfil'
     | '/privacidade'
     | '/suporte'
     | '/termos'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   AjudaRoute: typeof AjudaRoute
   CarteiraRoute: typeof CarteiraRoute
   JogoResponsavelRoute: typeof JogoResponsavelRoute
+  PerfilRoute: typeof PerfilRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   SuporteRoute: typeof SuporteRoute
   TermosRoute: typeof TermosRoute
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/jogo-responsavel'
       fullPath: '/jogo-responsavel'
       preLoaderRoute: typeof JogoResponsavelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidade': {
@@ -381,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   AjudaRoute: AjudaRoute,
   CarteiraRoute: CarteiraRoute,
   JogoResponsavelRoute: JogoResponsavelRoute,
+  PerfilRoute: PerfilRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   SuporteRoute: SuporteRoute,
   TermosRoute: TermosRoute,

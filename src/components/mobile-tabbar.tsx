@@ -1,4 +1,4 @@
-import { Dices, Gift, Sparkles, Wallet } from 'lucide-react'
+import { Dices, Gift, Sparkles, User, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function MobileTabbar() {
@@ -22,6 +22,7 @@ export function MobileTabbar() {
     { label: 'Slots PG', icon: Sparkles, href: '/#jogos', active: false },
     { label: 'Bônus', icon: Gift, href: '/#promocoes', active: false },
     { label: 'Carteira', icon: Wallet, href: '/carteira', active: currentPath === '/carteira' },
+    { label: 'Perfil', icon: User, href: '/perfil', active: currentPath === '/perfil' },
   ]
 
   return (

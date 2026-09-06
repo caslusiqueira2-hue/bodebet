@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowDownUp, LogOut, Menu, Search, Wallet, X } from 'lucide-react'
+import { ArrowDownUp, LogOut, Menu, Search, User, Wallet, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BrandLogo } from '@/components/brand-logo'
 import { useProfile } from '@/hooks/use-profile'
@@ -11,6 +11,7 @@ const navLinks = [
   { label: 'Mines', href: '/games/mines' },
   { label: 'Double', href: '/games/double' },
   { label: 'Carteira', href: '/carteira' },
+  { label: 'Perfil', href: '/perfil' },
   { label: 'Promoções', href: '/#promocoes' },
 ]
 
@@ -75,6 +76,28 @@ export function SiteHeader() {
           ) : profile ? (
             <>
               <div className="flex items-center gap-2">
+                {/* Botão Meu Perfil */}
+                <a
+                  href="/perfil"
+                  title="Meu Perfil"
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-card px-2.5 py-1.5 text-xs font-bold text-white transition-all hover:border-primary/50 hover:bg-card/80 shadow-sm"
+                >
+                  <div className="size-6 rounded-full bg-gradient-to-br from-primary to-purple-800 flex items-center justify-center text-white overflow-hidden text-[0.65rem] font-black shrink-0 ring-1 ring-white/20">
+                    {profile.photo_url ? (
+                      profile.photo_url.startsWith('preset:') ? (
+                        <span>🐐</span>
+                      ) : (
+                        <img src={profile.photo_url} alt="Avatar" className="size-full object-cover" />
+                      )
+                    ) : (
+                      <User className="size-3.5 text-white" />
+                    )}
+                  </div>
+                  <span className="hidden md:inline max-w-[85px] truncate">
+                    {profile.full_name?.split(' ')[0] || 'Perfil'}
+                  </span>
+                </a>
+
                 {/* Carteira / Saldo clicável que leva para /carteira */}
                 <a
                   href="/carteira"

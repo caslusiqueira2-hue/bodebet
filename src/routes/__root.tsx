@@ -23,6 +23,7 @@ function RootComponent() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [depositTab, setDepositTab] = useState<'deposit' | 'withdraw'>('deposit');
 
   useEffect(() => {
     let mounted = true;
@@ -48,7 +49,15 @@ function RootComponent() {
   }, []);
 
   useEffect(() => {
-    const handleOpen = () => setIsDepositOpen(true);
+    const handleOpen = (e?: Event) => {
+      const customEv = e as CustomEvent<{ tab?: 'deposit' | 'withdraw' }>;
+      if (customEv?.detail?.tab) {
+        setDepositTab(customEv.detail.tab);
+      } else {
+        setDepositTab('deposit');
+      }
+      setIsDepositOpen(true);
+    };
     document.addEventListener('open-deposit-modal', handleOpen);
     return () => document.removeEventListener('open-deposit-modal', handleOpen);
   }, []);
@@ -79,6 +88,7 @@ function RootComponent() {
             isOpen={isDepositOpen} 
             onClose={() => setIsDepositOpen(false)} 
             userId={session.user.id} 
+            initialTab={depositTab}
           />
           <ProfileCompletionModal />
         </>
