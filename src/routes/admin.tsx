@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   XCircle,
   Sparkles,
-  Gift
+  Gift,
+  Globe,
+  ExternalLink
 } from 'lucide-react';
 import { useProfile } from '@/hooks/use-profile';
 import { getPromoCodes, savePromoCodes, type PromoCode } from '@/lib/promo-codes';
@@ -273,9 +275,28 @@ function AdminDashboard() {
       <SiteHeader />
       
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 pt-8 pb-28 lg:px-8">
-        <div className="flex items-center gap-3">
-          <ShieldAlert className="size-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Painel Administrativo BodeBet</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="size-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Painel Administrativo BodeBet</h1>
+              <p className="text-xs text-muted-foreground">Gerenciamento global da plataforma e configurações</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <a 
+              href="https://bodebet.site" 
+              target="_blank" 
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all shadow-sm"
+              title="Abrir domínio oficial da plataforma"
+            >
+              <Globe className="size-3.5 text-emerald-400" />
+              <span>Domínio Oficial: <strong className="underline decoration-emerald-500/50">bodebet.site</strong></span>
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse ml-0.5"></span>
+              <ExternalLink className="size-3 text-emerald-400/70 ml-0.5" />
+            </a>
+          </div>
         </div>
 
         {/* NAVEGAÇÃO DE ABAS */}

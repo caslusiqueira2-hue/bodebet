@@ -229,7 +229,7 @@ function SuportePage() {
                   },
                   {
                     q: 'O que fazer caso tenha alguma dúvida ou problema?',
-                    a: 'Nossa equipe de suporte está disponível pelo e-mail oficial suporte@bodebet.com e canais de atendimento 24 horas por dia.'
+                    a: 'Nossa equipe de suporte está disponível pelo e-mail oficial suporte@bodebet.site e canais de atendimento 24 horas por dia.'
                   }
                 ].map((item, idx) => (
                   <div
@@ -273,10 +273,10 @@ function SuportePage() {
                 </div>
               </div>
               <a
-                href="mailto:suporte@bodebet.com"
+                href="mailto:suporte@bodebet.site"
                 className="bg-white/10 hover:bg-white/20 border border-white/15 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white transition-all active:scale-95 shrink-0"
               >
-                suporte@bodebet.com
+                suporte@bodebet.site
               </a>
             </div>
           </div>
@@ -568,7 +568,7 @@ function SuportePage() {
                   Para solicitar pausa temporária ou autoexclusão imediata da sua conta, contate nosso time:
                 </p>
                 <a
-                  href="mailto:suporte@bodebet.com?subject=Solicitacao%20de%20Autoexclusao%20-%20BodeBet"
+                  href="mailto:suporte@bodebet.site?subject=Solicitacao%20de%20Autoexclusao%20-%20BodeBet"
                   className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase px-5 py-2.5 rounded-xl transition-all active:scale-95 shrink-0 shadow-lg shadow-rose-600/30"
                 >
                   Solicitar Autoexclusão

@@ -33,12 +33,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         amount,
         client,
         metadata: {
-          provider: "MinesGame Vercel",
+          provider: "BodeBet",
           orderId: identifier
         },
-        // A URL do seu projeto Vercel precisa estar configurada nas variáveis de ambiente depois
-        // Mas por padrão, a Vercel preenche VERCEL_URL
-        callbackUrl: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/webhook` : ''
+        // Callback dinâmico suportando o domínio oficial bodebet.site e subdomínios Vercel
+        callbackUrl: (() => {
+          const reqHost = (req.headers['x-forwarded-host'] as string) || (req.headers['host'] as string);
+          if (reqHost && !reqHost.includes('localhost')) {
+            const host = reqHost.split(',')[0].trim();
+            const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
+            return `${proto}://${host}/api/webhook`;
+          }
+          if (process.env.VERCEL_URL) {
+            return `https://${process.env.VERCEL_URL}/api/webhook`;
+          }
+          return 'https://bodebet.site/api/webhook';
+        })()
       })
     });
 
