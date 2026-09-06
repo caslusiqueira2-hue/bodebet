@@ -28,22 +28,62 @@
 
     <title>Fortune Tiger</title>
     <script>
-        const host_name = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port;
-        const socket = io(host_name);
+        (function() {
+            var origOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                if (typeof url === 'string') {
+                    if (url.indexOf('api.vercel.app') !== -1 || url.indexOf('jogospg.shop') !== -1 || url.indexOf('/web-api/') !== -1 || url.indexOf('/game-api/') !== -1) {
+                        try {
+                            var u = new URL(url, window.location.origin);
+                            url = window.location.origin + u.pathname + u.search;
+                        } catch (e) {
+                            if (url.charAt(0) !== '/') url = '/' + url;
+                            url = window.location.origin + url;
+                        }
+                    }
+                }
+                return origOpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
+            };
 
-        const params = new URLSearchParams(window.location.search);
-        const data = [].concat(Array.from(params.entries())).reduce((acum, param) => {
+            if (window.fetch) {
+                var origFetch = window.fetch;
+                window.fetch = function(input, init) {
+                    if (typeof input === 'string') {
+                        if (input.indexOf('api.vercel.app') !== -1 || input.indexOf('jogospg.shop') !== -1 || input.indexOf('/web-api/') !== -1 || input.indexOf('/game-api/') !== -1) {
+                            try {
+                                var u = new URL(input, window.location.origin);
+                                input = window.location.origin + u.pathname + u.search;
+                            } catch (e) {
+                                if (input.charAt(0) !== '/') input = '/' + input;
+                                input = window.location.origin + input;
+                            }
+                        }
+                    } else if (input && input.url) {
+                        if (input.url.indexOf('api.vercel.app') !== -1 || input.url.indexOf('jogospg.shop') !== -1 || input.url.indexOf('/web-api/') !== -1 || input.url.indexOf('/game-api/') !== -1) {
+                            var u = new URL(input.url, window.location.origin);
+                            input = new Request(window.location.origin + u.pathname + u.search, input);
+                        }
+                    }
+                    return origFetch.call(this, input, init);
+                };
+            }
+        })();
+
+        var host_name = window.location.origin;
+        var socket = io(host_name, { transports: ['polling', 'websocket'] });
+
+        var params = new URLSearchParams(window.location.search);
+        var data = [].concat(Array.from(params.entries())).reduce(function(acum, param) {
             acum[param[0]] = param[1];
             return acum;
         }, {});
 
-        const { t: token } = data;
-        const gameId = window.location.pathname.split("/")[1];
+        var token = data.t;
+        var gameId = window.location.pathname.split("/")[1];
 
         socket.on("connect", function () {
             socket.emit("join", { token: token, gameId: gameId });
         });
-
     </script>
     <style id="initial-style">
         body {
