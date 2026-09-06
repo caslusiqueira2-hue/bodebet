@@ -11,7 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AjudaRouteImport } from './routes/ajuda'
 import { Route as CarteiraRouteImport } from './routes/carteira'
+import { Route as JogoResponsavelRouteImport } from './routes/jogo-responsavel'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as SuporteRouteImport } from './routes/suporte'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as GamesAviatorRouteImport } from './routes/games.aviator'
 import { Route as GamesDoubleRouteImport } from './routes/games.double'
 import { Route as GamesFortuneTigerRouteImport } from './routes/games.fortune-tiger'
@@ -32,9 +37,34 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AjudaRoute = AjudaRouteImport.update({
+  id: '/ajuda',
+  path: '/ajuda',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CarteiraRoute = CarteiraRouteImport.update({
   id: '/carteira',
   path: '/carteira',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JogoResponsavelRoute = JogoResponsavelRouteImport.update({
+  id: '/jogo-responsavel',
+  path: '/jogo-responsavel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuporteRoute = SuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesAviatorRoute = GamesAviatorRouteImport.update({
@@ -86,7 +116,12 @@ const GamesSweetCandyRoute = GamesSweetCandyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/ajuda': typeof AjudaRoute
   '/carteira': typeof CarteiraRoute
+  '/jogo-responsavel': typeof JogoResponsavelRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/suporte': typeof SuporteRoute
+  '/termos': typeof TermosRoute
   '/games/aviator': typeof GamesAviatorRoute
   '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
@@ -100,7 +135,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/ajuda': typeof AjudaRoute
   '/carteira': typeof CarteiraRoute
+  '/jogo-responsavel': typeof JogoResponsavelRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/suporte': typeof SuporteRoute
+  '/termos': typeof TermosRoute
   '/games/aviator': typeof GamesAviatorRoute
   '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
@@ -115,7 +155,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/ajuda': typeof AjudaRoute
   '/carteira': typeof CarteiraRoute
+  '/jogo-responsavel': typeof JogoResponsavelRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/suporte': typeof SuporteRoute
+  '/termos': typeof TermosRoute
   '/games/aviator': typeof GamesAviatorRoute
   '/games/double': typeof GamesDoubleRoute
   '/games/fortune-tiger': typeof GamesFortuneTigerRoute
@@ -131,7 +176,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/ajuda'
     | '/carteira'
+    | '/jogo-responsavel'
+    | '/privacidade'
+    | '/suporte'
+    | '/termos'
     | '/games/aviator'
     | '/games/double'
     | '/games/fortune-tiger'
@@ -145,7 +195,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/ajuda'
     | '/carteira'
+    | '/jogo-responsavel'
+    | '/privacidade'
+    | '/suporte'
+    | '/termos'
     | '/games/aviator'
     | '/games/double'
     | '/games/fortune-tiger'
@@ -159,7 +214,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/ajuda'
     | '/carteira'
+    | '/jogo-responsavel'
+    | '/privacidade'
+    | '/suporte'
+    | '/termos'
     | '/games/aviator'
     | '/games/double'
     | '/games/fortune-tiger'
@@ -174,7 +234,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AjudaRoute: typeof AjudaRoute
   CarteiraRoute: typeof CarteiraRoute
+  JogoResponsavelRoute: typeof JogoResponsavelRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  SuporteRoute: typeof SuporteRoute
+  TermosRoute: typeof TermosRoute
   GamesAviatorRoute: typeof GamesAviatorRoute
   GamesDoubleRoute: typeof GamesDoubleRoute
   GamesFortuneTigerRoute: typeof GamesFortuneTigerRoute
@@ -202,11 +267,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ajuda': {
+      id: '/ajuda'
+      path: '/ajuda'
+      fullPath: '/ajuda'
+      preLoaderRoute: typeof AjudaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/carteira': {
       id: '/carteira'
       path: '/carteira'
       fullPath: '/carteira'
       preLoaderRoute: typeof CarteiraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jogo-responsavel': {
+      id: '/jogo-responsavel'
+      path: '/jogo-responsavel'
+      fullPath: '/jogo-responsavel'
+      preLoaderRoute: typeof JogoResponsavelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suporte': {
+      id: '/suporte'
+      path: '/suporte'
+      fullPath: '/suporte'
+      preLoaderRoute: typeof SuporteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/aviator': {
@@ -278,7 +378,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AjudaRoute: AjudaRoute,
   CarteiraRoute: CarteiraRoute,
+  JogoResponsavelRoute: JogoResponsavelRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
+  SuporteRoute: SuporteRoute,
+  TermosRoute: TermosRoute,
   GamesAviatorRoute: GamesAviatorRoute,
   GamesDoubleRoute: GamesDoubleRoute,
   GamesFortuneTigerRoute: GamesFortuneTigerRoute,
