@@ -39,7 +39,7 @@ export function MobileTabbar({ isHidden }: MobileTabbarProps = {}) {
     return null
   }
 
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+  if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/games'))) {
     return null
   }
 
