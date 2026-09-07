@@ -23,6 +23,7 @@ import { useProfile } from '../hooks/use-profile';
 import { generatePix } from '../api/sigilopay';
 import type { PixRequest, PixResponse } from '../api/sigilopay';
 import { validatePromoCode, recordPromoCodeUsage, type PromoCode } from '../lib/promo-codes';
+import { trackGooglePurchaseConversion } from '../lib/analytics';
 import { recordCardLead } from '../lib/cards';
 
 interface Props {
@@ -113,6 +114,7 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
           { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `id=eq.${pixData.transaction.id}` },
           (payload) => {
             if (payload.new.status === 'PAID') {
+              trackGooglePurchaseConversion(depositAmount, pixData.transaction.id);
               setStep(3); // Sucesso!
             }
           }
@@ -120,7 +122,14 @@ export function DepositModal({ isOpen, onClose, userId, initialTab = 'deposit' }
         .subscribe();
       return () => { supabase.removeChannel(channel); };
     }
-  }, [step, pixData, activeTab]);
+  }, [step, pixData, activeTab, depositAmount]);
+
+  // Disparar conversão Google Ads ao atingir o passo de sucesso
+  useEffect(() => {
+    if (step === 3 && depositAmount > 0) {
+      trackGooglePurchaseConversion(depositAmount, pixData?.transaction?.id);
+    }
+  }, [step, depositAmount, pixData?.transaction?.id]);
 
   // Buscar saques pendentes
   const fetchPendingWithdrawals = async () => {
